@@ -135,3 +135,5 @@ yarn.lock
 package-lock.json
 .env
 .next/
+uploads/
+public/images
