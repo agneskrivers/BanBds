@@ -1,7 +1,7 @@
 import { model, Model, Schema } from 'mongoose';
 
 // Helpers
-import { handleError, getPages } from '@server/helpers';
+import { handleError, getPages, convertToEnglish } from '@server/helpers';
 
 // Models
 import { InvestorsModel } from '@server/models';
@@ -134,7 +134,7 @@ ProjectSchema.statics.getShortlistForApp = async function (
             .limit(10)
             .skip(page * 10)
             .select(
-                'title prices status type acreages location investor images'
+                'title prices status type acreages location investor images projectID'
             );
 
         const pages = getPages(totals - 1);
@@ -203,11 +203,18 @@ ProjectSchema.statics.getInfoForApp = async function (
             }
         }
 
+        const regexSpace = /\s/gi;
+        // eslint-disable-next-line no-useless-escape
+        const regex = /(\,|\.)/gi;
+
         return {
             ...result,
             coordinate: location.coordinate,
             address: location.address,
             investor,
+            link: `du-an/${convertToEnglish(decodeURI(result.title))
+                .replaceAll(regexSpace, '-')
+                .replaceAll(regex, '')}-${result.projectID}`,
         };
     } catch (error) {
         const { message } = error as Error;
