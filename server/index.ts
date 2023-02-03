@@ -12,13 +12,20 @@ import next from 'next';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
+import path from 'path';
 import { connect, connection } from 'mongoose';
+
+// Setup
+import address from './address';
 
 // APIs
 import apis from '@server/apis';
 
 // Configs
 import { MongoURI } from '@server/configs';
+
+// Controllers
+import controllers from '@server/controllers';
 
 // MongoDB
 connect(MongoURI);
@@ -31,27 +38,42 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const appHandler = app.getRequestHandler();
 
-app.prepare()
+address()
     .then(() => {
-        const server = express();
+        app.prepare()
+            .then(() => {
+                const server = express();
 
-        // Server Use
-        server.use(cors());
-        server.use(json());
-        server.use(urlencoded({ extended: true }));
-        server.use(helmet());
+                // Server Use
+                server.use(cors());
+                server.use(json());
+                server.use(urlencoded({ extended: true }));
+                server.use(helmet({ contentSecurityPolicy: false }));
 
-        if (dev) {
-            server.use(morgan('dev'));
-        }
+                if (dev) {
+                    server.use(morgan('dev'));
+                }
 
-        server.use('/api-gateway', apis);
+                // Use
+                server.use('/api-gateway', apis);
+                server.use(express.static(path.join(process.cwd(), 'public')));
 
-        server.all('*', (req, res) => appHandler(req, res));
+                // Get
+                server.get('/temp/:image', controllers.temp);
 
-        server.listen(port, () =>
-            console.log(`Server running is port ${port}`)
-        );
+                server.all('*', (req, res) => appHandler(req, res));
+
+                server.listen(port, () =>
+                    console.log(`Server running is port ${port}`)
+                );
+            })
+            .catch((error) => {
+                const { message } = error as Error;
+
+                console.log(`Server Error: ${message}`);
+
+                process.exit(1);
+            });
     })
     .catch((error) => {
         const { message } = error as Error;
