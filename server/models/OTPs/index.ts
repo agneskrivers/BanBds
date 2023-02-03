@@ -46,6 +46,7 @@ const OtpSchema = new Schema<IOtp, OtpModel, OtpMethods>(
         expiredAt: { type: Date, required: true },
         renew: { type: Number, default: 0 },
         failed: { type: Number, default: 0 },
+        isHash: { type: Boolean, required: true },
     },
     {
         timestamps: false,
@@ -57,12 +58,15 @@ OtpSchema.index({ expiredAt: 1 }, { expireAfterSeconds: 0 });
 // Pre
 OtpSchema.pre('save', async function (next) {
     try {
-        const rounds = Math.floor(Math.random() * 11) + 1;
+        if (this.isHash) {
+            const rounds = Math.floor(Math.random() * 11) + 1;
 
-        const salt = await bcrypt.genSalt(rounds);
-        const hash = await bcrypt.hash(this.otp, salt);
+            const salt = await bcrypt.genSalt(rounds);
+            const hash = await bcrypt.hash(this.otp, salt);
 
-        this.otp = hash;
+            this.otp = hash;
+            this.isHash = false;
+        }
 
         next();
     } catch (error) {
@@ -122,6 +126,7 @@ OtpSchema.statics.send = async function (
             checkPhoneNumber.otp = otp;
             checkPhoneNumber.expiredAt = new Date(Date.now() + LimitOTP.otp);
             checkPhoneNumber.renew = updateRenew;
+            checkPhoneNumber.isHash = true;
 
             await checkPhoneNumber.save();
 
@@ -134,7 +139,12 @@ OtpSchema.statics.send = async function (
 
         const expiredAt = new Date(Date.now() + LimitOTP.otp);
 
-        const newPhoneNumber = new this({ phoneNumber, otp, expiredAt });
+        const newPhoneNumber = new this({
+            phoneNumber,
+            otp,
+            expiredAt,
+            isHash: true,
+        });
 
         await newPhoneNumber.save();
 
@@ -174,6 +184,8 @@ OtpSchema.methods.check = async function (otp) {
 
             return false;
         }
+
+        await this.remove();
 
         return true;
     } catch (error) {
