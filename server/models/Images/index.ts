@@ -4,7 +4,7 @@ import fsPromises from 'fs/promises';
 import path from 'path';
 
 // Config
-import { pathPublic, pathTemp } from '@server/configs';
+import { pathPublic, pathTemp, pathImages } from '@server/configs';
 
 // Helpers
 import { handleError } from '@server/helpers';
@@ -47,7 +47,7 @@ ImageSchema.statics.createImg = async function (
     img: IImage,
     type: IImagePathType
 ): Promise<boolean> {
-    const pathDir = path.join(pathPublic, type);
+    const pathDir = path.join(pathImages, type);
 
     const pathImage = path.join(pathDir, `${img.fileName}`);
     const pathImageTemp = path.join(pathTemp, `${img.fileName}`);
@@ -56,6 +56,14 @@ ImageSchema.statics.createImg = async function (
         if (fs.existsSync(pathImage)) return true;
 
         if (!fs.existsSync(pathImageTemp)) return false;
+
+        if (!fs.existsSync(pathPublic)) {
+            fs.mkdirSync(pathPublic);
+        }
+
+        if (!fs.existsSync(pathImages)) {
+            fs.mkdirSync(pathImages);
+        }
 
         if (!fs.existsSync(pathDir)) {
             fs.mkdirSync(pathDir);
