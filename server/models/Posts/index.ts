@@ -2,10 +2,16 @@ import { model, Model, Schema, Document } from 'mongoose';
 import getVideoId from 'get-video-id';
 
 // Helpers
-import { handleError, generateID, getAddress, getPages } from '@server/helpers';
+import {
+    handleError,
+    generateID,
+    getAddress,
+    getPages,
+    convertToEnglish,
+} from '@server/helpers';
 
 // Models
-import { UsersModel, ImagesModel } from '@server/models';
+import { UsersModel, ImagesModel, BrokersModel } from '@server/models';
 
 // Services
 import services from '@server/services';
@@ -47,6 +53,7 @@ interface PostMethods extends Document, IPost {
         data: IPostUpdateForUser
     ): Promise<boolean | ResultUpdateByUser>;
     removePost(): Promise<boolean>;
+    sold(): Promise<boolean>;
 }
 
 // Model Interface
@@ -56,6 +63,7 @@ interface PostModel extends Model<IPost, Record<string, string>, PostMethods> {
         page: number,
         type: IPostType,
         region?: string,
+        district?: string,
         search?: string,
         filter?: IPostFilter,
         sort?: IPostSort
@@ -118,11 +126,7 @@ const PostSchema = new Schema<IPost, PostModel, PostMethods>(
             required: true,
         },
         broker: {
-            type: {
-                brokerID: { type: Number, required: true },
-                name: { type: String, required: true },
-                phoneNumber: { type: [String], required: true },
-            },
+            type: String,
             default: null,
         },
         direction: {
@@ -245,6 +249,7 @@ PostSchema.statics.getShortlistForApp = async function (
     page: number,
     type: IPostType,
     region?: string,
+    district?: string,
     search?: string,
     filter?: IPostFilter,
     sort?: IPostSort
@@ -256,6 +261,11 @@ PostSchema.statics.getShortlistForApp = async function (
         if (region) {
             doc.find({ 'location.region': region });
             count.countDocuments({ 'location.region': region });
+        }
+
+        if (district) {
+            doc.find({ 'location.district': district });
+            count.countDocuments({ 'location.district': district });
         }
 
         if (search) {
@@ -310,7 +320,7 @@ PostSchema.statics.getShortlistForApp = async function (
             .limit(10)
             .skip(page * 10)
             .select(
-                'title prices location acreages category images video legal direction'
+                'title prices location acreages category images video legal direction postID'
             );
         const totals = await count.exec();
         const pages = getPages(totals);
@@ -349,7 +359,7 @@ PostSchema.statics.getMyShortlistForApp = async function (
     try {
         const list = await this.find({ userID, type, status })
             .select(
-                'title prices acreages category legal direction images video location'
+                'title prices acreages category legal direction images video location postID'
             )
             .limit(10)
             .skip(page * 10);
@@ -391,17 +401,26 @@ PostSchema.statics.getInfoForWeb = async function (
 
         if (!post) return null;
 
-        const { location, poster, broker, createdAt, ...result } =
-            post.toObject();
+        const {
+            location,
+            poster,
+            broker: brokerID,
+            createdAt,
+            ...result
+        } = post.toObject();
 
         const { address, coordinate } = location;
 
         let contact = poster.name;
         let phoneNumber = poster.phoneNumber;
 
-        if (broker) {
-            contact = broker.name;
-            phoneNumber = broker.phoneNumber;
+        if (brokerID) {
+            const broker = await BrokersModel.getInfo(brokerID);
+
+            if (broker) {
+                contact = broker.name;
+                phoneNumber = broker.phoneNumber;
+            }
         }
 
         return {
@@ -428,7 +447,7 @@ PostSchema.statics.getInfoForApp = async function (
 
         if (!result) return null;
 
-        const link = `/tin-dang/${result.title}-${postID}`;
+        const link = `tin-dang/${convertToEnglish(result.title)}-${postID}`;
 
         return {
             ...result,
@@ -454,13 +473,16 @@ PostSchema.statics.getMyPostInfo = async function (
         const post = await this.findOne(
             { postID, userID },
             { projection: { _id: 0 } }
-        ).select(
-            'createdAt -postID -userID -status -broker -views -editor -updatedAt'
-        );
+        ).select('createdAt -postID -userID -broker -views -editor -updatedAt');
 
         if (!post) return null;
 
-        return post.toObject();
+        const { createdAt, ...result } = post.toObject();
+
+        return {
+            ...result,
+            time: new Date(createdAt).getTime(),
+        };
     } catch (error) {
         const { message } = error as Error;
 
@@ -697,6 +719,21 @@ PostSchema.methods.updateByUser = async function (data) {
         const { message } = error as Error;
 
         handleError('Model Posts Method Update By User', message);
+
+        return false;
+    }
+};
+PostSchema.methods.sold = async function () {
+    try {
+        this.status = 'sold';
+
+        await this.save();
+
+        return true;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Method Sold', message);
 
         return false;
     }
