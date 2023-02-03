@@ -1,3 +1,4 @@
+export { default as convertToEnglish } from './convertToEnglish';
 export { default as generateID } from './generateID';
 export { default as getAddress } from './getAddress';
 export { default as getPages } from './getPages';
