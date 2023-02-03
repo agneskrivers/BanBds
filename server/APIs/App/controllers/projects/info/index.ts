@@ -11,21 +11,29 @@ import { ProjectsModel } from '@server/models';
 import type { ResJSON, IProjectInfoForApp } from '@interfaces';
 
 // Request Interface
-interface ReqBody {
-    projectID: number;
+interface ReqParams {
+    projectID: string;
 }
 
 // Function Type
 type ApiAppProjectInfo = (
-    req: Request<unknown, unknown, ReqBody>,
+    req: Request<ReqParams>,
     res: Response<ResJSON<IProjectInfoForApp>>
 ) => Promise<void>;
 
 const Index: ApiAppProjectInfo = async (req, res) => {
-    const { projectID } = req.body;
+    const { projectID } = req.params;
 
     try {
-        const data = await ProjectsModel.getInfoForApp(projectID);
+        if (isNaN(parseInt(projectID))) {
+            const { statusCode, message } = new createHttpError.BadRequest();
+
+            res.status(statusCode).json({ status: 'Not Process', message });
+
+            return;
+        }
+
+        const data = await ProjectsModel.getInfoForApp(parseInt(projectID));
 
         if (!data) {
             const { statusCode, message } = new createHttpError.BadRequest();
