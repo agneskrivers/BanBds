@@ -5,7 +5,7 @@ import createHttpError from 'http-errors';
 import { handleError } from '@server/helpers';
 
 // Models
-import { OTPsModel } from '@server/models';
+import { OTPsModel, RenewOTPsModel, FailedOTPsModel } from '@server/models';
 
 // Interfaces
 import type { ResJSON, IApiReqParamsPhoneNumber } from '@interfaces';
@@ -20,6 +20,21 @@ const Index: ApiAppLoginSend = async (req, res) => {
     const { phoneNumber } = req.params;
 
     try {
+        const checkRenew = await RenewOTPsModel.findOne({ phoneNumber });
+        const checkFailed = await FailedOTPsModel.findOne({ phoneNumber });
+
+        if (checkRenew) {
+            res.status(202).json({ status: 'Not Process', message: 'Renew' });
+
+            return;
+        }
+
+        if (checkFailed) {
+            res.status(202).json({ status: 'Not Process', message: 'Failed' });
+
+            return;
+        }
+
         const status = await OTPsModel.send(phoneNumber);
 
         if (!status) {
