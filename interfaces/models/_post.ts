@@ -15,7 +15,8 @@ type PostCompactForAppKey =
     | 'acreages'
     | 'category'
     | 'legal'
-    | 'direction';
+    | 'direction'
+    | 'postID';
 type PostSortKey = 'acreages' | 'prices' | 'createdAt';
 type PostInfoKey =
     | 'userID'
@@ -27,7 +28,9 @@ type PostInfoKey =
     | 'status'
     | 'location'
     | 'postID';
-type MyPostInfoKey = Exclude<PostInfoKey, 'location' | 'poster'> | 'views';
+type MyPostInfoKey =
+    | Exclude<PostInfoKey, 'location' | 'poster' | 'status'>
+    | 'views';
 type PostUpdateForUserKey =
     | 'postID'
     | 'userID'
@@ -46,6 +49,7 @@ type PostCreate = Omit<IPost, PostCreateKey>;
 type PostCompactForApp = Pick<IPost, PostCompactForAppKey>;
 type PostInfo = Omit<IPost, PostInfoKey>;
 type PostUpdateForUser = Partial<Omit<IPost, PostUpdateForUserKey>>;
+type MyPostInfo = Omit<IPost, MyPostInfoKey>;
 
 // Export Types
 export type IPostCategory = 'apartment' | 'house' | 'soil';
@@ -61,14 +65,11 @@ export type IPostDirection =
     | 'southwest'
     | 'southeast';
 export type IPostLegal = 'book' | 'saleContract' | 'waitingForBook';
-export type IPoster = Omit<IPostBroker, 'brokerID'>;
 export type IPostSortValue = 'asc' | 'desc';
 export type IPostSort = Partial<Record<PostSortKey, IPostSortValue>>;
-export type IMyPostInfo = Omit<IPost, MyPostInfoKey>;
 
 // Export Interfaces
-export interface IPostBroker {
-    brokerID: number;
+export interface IPoster {
     name: string;
     phoneNumber: string[];
 }
@@ -105,7 +106,7 @@ export interface IPost {
     project: string | null;
 
     poster: IPoster;
-    broker: IPostBroker | null;
+    broker: string | null;
 
     direction: null | IPostDirection;
     facades: null | number;
@@ -151,4 +152,7 @@ export interface IPostUpdateForUser extends PostUpdateForUser {
     poster?: Partial<IPoster>;
     location?: Partial<Omit<IPostLocation, 'coordinate'>>;
     removeImages?: string[];
+}
+export interface IMyPostInfo extends MyPostInfo {
+    time: number;
 }

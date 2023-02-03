@@ -89,6 +89,7 @@ export interface IProjectInfoForApp extends ProjectInfo {
     investor: IInvestor | null;
     address: string;
     coordinate: IProjectLocationCoordinate;
+    link: string;
 }
 export interface IResultGetShortlistForApp {
     hot: IProjectCompactForApp | null;
