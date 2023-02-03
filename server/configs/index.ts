@@ -11,6 +11,7 @@ export const ESmsApiKey = process.env.ESMS_API_KEY as string;
 export const ESmsSecretKey = process.env.ESMS_SECRET_KEY as string;
 
 export const pathPublic = path.join(process.cwd(), 'public');
+export const pathImages = path.join(pathPublic, 'images');
 export const pathTemp = path.join(process.cwd(), 'uploads');
 export const pathData = path.join(process.cwd(), 'data');
 
