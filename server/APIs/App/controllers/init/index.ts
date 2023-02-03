@@ -86,6 +86,10 @@ const Index: ApiAppInit = async (req, res) => {
 
             link = JSON.parse(dataLink) as ILinkJSON;
         } else {
+            if (!fs.existsSync(pathData)) {
+                fs.mkdirSync(pathData);
+            }
+
             await fs.writeFileSync(pathLink, JSON.stringify(LinkDefault));
         }
 
