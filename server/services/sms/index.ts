@@ -18,28 +18,32 @@ const Index: IServerServiceSMS = async (phoneNumber, otp) => {
         'http://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/';
 
     try {
-        const body: IServerServiceESmsReqBody = {
-            ApiKey: ESmsApiKey,
-            SecretKey: ESmsSecretKey,
-            Phone: phoneNumber,
-            Content: otp,
-            SmsType: 8,
-        };
+        if (process.env.NODE_ENV === 'production') {
+            const body: IServerServiceESmsReqBody = {
+                ApiKey: ESmsApiKey,
+                SecretKey: ESmsSecretKey,
+                Phone: phoneNumber,
+                Content: otp,
+                SmsType: 8,
+            };
 
-        const response = await fetch(uri, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-        const { CodeResult } =
-            (await response.json()) as IServerServiceESmsResult;
+            const response = await fetch(uri, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            });
+            const { CodeResult } =
+                (await response.json()) as IServerServiceESmsResult;
 
-        if (isNaN(parseInt(CodeResult))) return false;
+            if (isNaN(parseInt(CodeResult))) return false;
 
-        if (parseInt(CodeResult) !== 100)
-            throw new Error(ESmsCodeResponse[CodeResult]);
+            if (parseInt(CodeResult) !== 100)
+                throw new Error(ESmsCodeResponse[CodeResult]);
+        } else {
+            console.log(otp);
+        }
 
         return true;
     } catch (error) {
