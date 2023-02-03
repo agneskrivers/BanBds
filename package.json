@@ -67,6 +67,7 @@
     "_moduleAliases": {
         "@server/apis": "build/server/APIs",
         "@server/configs": "build/server/configs",
+        "@server/controllers": "build/server/controllers",
         "@server/controllers/App": "build/server/APIs/App/controllers",
         "@server/controllers/Common": "build/server/APIs/Common/controllers",
         "@server/enums": "build/server/enums",

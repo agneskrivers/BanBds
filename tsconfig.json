@@ -31,6 +31,7 @@
             // Server
             "@server/apis": ["./server/APIs/index.ts"],
             "@server/configs": ["./server/configs/index.ts"],
+            "@server/controllers": ["./server/controllers/index.ts"],
             "@server/controllers/App": [
                 "./server/APIs/App/controllers/index.ts"
             ],
