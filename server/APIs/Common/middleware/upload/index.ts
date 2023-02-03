@@ -19,7 +19,20 @@ type CommonMiddlewareUpload = (
     next: NextFunction
 ) => void;
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+        if (!fs.existsSync(pathTemp)) {
+            fs.mkdirSync(pathTemp, { recursive: true });
+        }
+
+        cb(null, pathTemp);
+    },
+    filename: (_req, file, cb) => {
+        const name = generateFileName(file.originalname);
+
+        cb(null, name);
+    },
+});
 
 const upload = multer({
     storage,
@@ -28,9 +41,6 @@ const upload = multer({
 
         if (ValidExtname.indexOf(ext) < 0)
             return cb(new Error('Invalid format!'));
-
-        const name = generateFileName(file.originalname);
-        file.filename = name;
 
         cb(null, true);
     },
@@ -42,17 +52,6 @@ const upload = multer({
 
 const Index: CommonMiddlewareUpload = (req, res, next) => {
     upload(req, res, (error) => {
-        const file = req.file;
-
-        if (!file) {
-            res.status(202).json({
-                status: 'Not Process',
-                message: 'NotFound',
-            });
-
-            return;
-        }
-
         if (error instanceof multer.MulterError) {
             res.status(202).json({ status: 'ImageToBig' });
 
@@ -62,16 +61,6 @@ const Index: CommonMiddlewareUpload = (req, res, next) => {
 
             return;
         }
-
-        fs.access(pathTemp, (error) => {
-            if (error && error.code === 'ENOENT') {
-                fs.mkdirSync(pathTemp);
-            }
-
-            const filePath = path.join(pathTemp, file.filename);
-            const buffer = file.buffer;
-            fs.writeFileSync(filePath, buffer);
-        });
 
         next();
     });
