@@ -1,3 +1,4 @@
+import address from './address';
 import image from './images';
 
-export default { image };
+export default { address, image };
