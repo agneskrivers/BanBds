@@ -54,10 +54,8 @@ NewsSchema.statics.getShortlistForApp = async function (
         const count = this.countDocuments();
         const doc = this.find();
 
-        if (region !== 'all') {
-            doc.find({ region });
-            count.countDocuments({ region });
-        }
+        doc.find({ region: { $in: ['all', region] } });
+        count.countDocuments({ region: { $in: ['all', region] } });
 
         const totals = await count.exec();
 
@@ -120,12 +118,17 @@ NewsSchema.statics.getInfo = async function (
 ): Promise<INewsInfo | null> {
     try {
         const news = await this.findById(id, { projection: { _id: 0 } }).select(
-            'title description content'
+            'title description content createdAt'
         );
 
         if (!news) return null;
 
-        return news.toObject();
+        const { createdAt, ...result } = news.toObject();
+
+        return {
+            ...result,
+            time: new Date(createdAt).getTime(),
+        };
     } catch (error) {
         const { message } = error as Error;
 
