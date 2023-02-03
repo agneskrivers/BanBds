@@ -37,6 +37,7 @@ const Index: ApiAppPostShortlist = async (req, res) => {
         pricesMin,
         region,
         search,
+        district,
     } = req.query;
 
     try {
@@ -109,17 +110,18 @@ const Index: ApiAppPostShortlist = async (req, res) => {
         }
 
         if (prices) {
-            sort = { ...(sort ? sort : {}), prices };
+            sort = { prices };
         }
 
         if (createdAt) {
-            sort = { ...(sort ? sort : {}), createdAt };
+            sort = { createdAt };
         }
 
         const data = await PostsModel.getShortlistForApp(
             parseInt(page) - 1,
             type,
             region,
+            district,
             search,
             filter,
             sort
