@@ -8,6 +8,10 @@ import middleware from '@server/middleware/Common';
 
 const router = Router();
 
+// Get
+router.get('/districts', controllers.address.districts);
+router.get('/wards', controllers.address.wards);
+
 // Post
 router.post(
     '/images',
