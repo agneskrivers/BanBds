@@ -27,6 +27,7 @@ export interface IApiAppPostShortlistReqQuery {
     type: IPostType;
     page: string;
     region?: string;
+    district?: string;
     search?: string;
     category?: IPostCategory;
     pricesMin?: string;
