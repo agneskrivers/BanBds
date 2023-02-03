@@ -1,4 +1,5 @@
 export { default as AnalyticsModel } from './Analytics';
+export { default as BrokersModel } from './Brokers';
 export { default as DevicesModel } from './Devices';
 export { default as DistrictsModel } from './Districts';
 export { default as ImagesModel } from './Images';
