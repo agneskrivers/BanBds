@@ -17,7 +17,7 @@ import type { IServerCommonConvertSize } from '@interfaces';
 const Index: IServerCommonConvertSize = async (pathFile, isAvatar) => {
     try {
         const fileName = path.basename(pathFile);
-        const [name] = fileName.split('.');
+        const [name, ext] = fileName.split('.');
 
         const dimensions = await imageSize(pathFile);
 
@@ -47,15 +47,21 @@ const Index: IServerCommonConvertSize = async (pathFile, isAvatar) => {
             result = result.resize(convertWidth, convertHeight);
         }
 
-        result = result.webp({ quality: 90 });
+        if (ext === 'jpeg') {
+            result = result.png({ quality: 90 });
+        } else {
+            result = result.jpeg({ quality: 90 });
+        }
 
         // Write the result to a file in the temporary directory
-        await result.toFile(path.join(pathTemp, `${name}.webp`));
+        await result.toFile(
+            path.join(pathTemp, `${name}.${ext === 'jpeg' ? 'png' : 'jpeg'}`)
+        );
 
         // Delete the original file
         await fs.unlink(pathFile);
 
-        return `${name}.webp`;
+        return `${name}.${ext === 'jpeg' ? 'png' : 'jpeg'}`;
     } catch (error) {
         const { message } = error as Error;
 
