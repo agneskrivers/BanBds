@@ -40,3 +40,7 @@ export interface IImage extends Image {
     fileName: string;
     userID: number;
 }
+export interface IBroker {
+    name: string;
+    phoneNumber: string[];
+}
