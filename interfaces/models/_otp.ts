@@ -9,4 +9,5 @@ export interface IOtp {
     failed: number;
     renew: number;
     lastSend: Date;
+    isHash: boolean;
 }
