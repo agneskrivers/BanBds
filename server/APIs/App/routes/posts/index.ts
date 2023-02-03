@@ -17,8 +17,11 @@ router.get('/info/:postID/my', middleware.user, controllers.posts.myPostInfo);
 // Post
 router.post('/', middleware.user, controllers.posts.create);
 
+// Put
+router.put('/:postID', middleware.user, controllers.posts.update);
+
 // Patch
-router.patch('/:postID', middleware.user, controllers.posts.update);
+router.patch('/:postID', middleware.user, controllers.posts.sold);
 
 // Delete
 router.delete('/:postID', middleware.user, controllers.posts.remove);
