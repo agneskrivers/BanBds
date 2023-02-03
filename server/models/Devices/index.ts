@@ -42,10 +42,11 @@ const DeviceSchema = new Schema<IDevice, DeviceModel>(
         },
         os: { type: String, required: true },
 
-        branch: { type: String, default: null },
+        brand: { type: String, default: null },
         model: { type: String, default: null },
         device: { type: String, default: null },
         lastUpdate: { type: Number, default: null },
+        mac: { type: String, unique: true, required: true },
     },
     {
         timestamps: false,
@@ -194,8 +195,8 @@ DeviceSchema.statics.updateDevice = async function (
 
         if (!device) return false;
 
-        if (info.branch) {
-            device.branch = info.branch;
+        if (info.brand) {
+            device.brand = info.brand;
         }
 
         if (info.model) {
