@@ -17,9 +17,27 @@ type ProjectInfoKey =
     | 'status'
     | 'title'
     | 'images';
+type ProjectCompactForWebKey =
+    | 'title'
+    | 'type'
+    | 'status'
+    | 'acreages'
+    | 'prices';
+type ProjectCompactForWebDashboardKey =
+    | 'title'
+    | 'type'
+    | 'status'
+    | 'investor'
+    | 'acreages'
+    | 'prices';
 
 type ProjectCompactForApp = Pick<IProject, ProjectCompactForAppKey>;
 type ProjectInfo = Pick<IProject, ProjectInfoKey>;
+type ProjectCompactForWeb = Pick<IProject, ProjectCompactForWebKey>;
+type ProjectCompactForWebDashboard = Pick<
+    IProject,
+    ProjectCompactForWebDashboardKey
+>;
 
 // Interface
 interface ProjectPriceByValue {
@@ -30,10 +48,7 @@ interface ProjectPriceByValue {
 // Export Type
 export type IProjectType = 'apartment' | 'land';
 export type IProjectStatus = 'onSale' | 'openingSoon' | 'handedOver';
-export type IProjectInfoForWeb = Omit<
-    IProjectInfoForApp,
-    'link' | 'coordinate'
->;
+export type IProjectInfoForWeb = Omit<IProjectInfoForApp, 'link'>;
 
 // Export Interface
 export interface IProjectOverview {
@@ -79,11 +94,28 @@ export interface IProject {
     createdAt: Date;
     updatedAt: Date;
 }
+export interface IProjectCompactForWebDashboard
+    extends ProjectCompactForWebDashboard {
+    id: string;
+    thumbnail: string;
+    address: string;
+    link: string;
+}
 export interface IProjectCompactForApp extends ProjectCompactForApp {
     id: string;
     image: string;
     company: string | null;
     address: string;
+}
+export interface IProjectCompactForWeb extends ProjectCompactForWeb {
+    id: string;
+    numberOfApartments: number | null;
+    courtNumber: number | null;
+    thumbnail: string;
+    images: number;
+    address: string;
+    link: string;
+    investor: IInvestor | null;
 }
 export interface IProjectInfoForApp extends ProjectInfo {
     investor: IInvestor | null;

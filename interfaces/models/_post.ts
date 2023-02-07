@@ -17,6 +17,15 @@ type PostCompactForAppKey =
     | 'legal'
     | 'direction'
     | 'postID';
+type PostCompactForWebDashboardKey =
+    | 'title'
+    | 'category'
+    | 'acreages'
+    | 'prices'
+    | 'direction'
+    | 'facades'
+    | 'ways';
+type PostCompactForWebKey = 'title' | 'acreages' | 'prices';
 type PostSortKey = 'acreages' | 'prices' | 'createdAt';
 type PostInfoKey =
     | 'userID'
@@ -26,8 +35,7 @@ type PostInfoKey =
     | 'updatedAt'
     | 'editor'
     | 'status'
-    | 'location'
-    | 'postID';
+    | 'location';
 type MyPostInfoKey =
     | Exclude<PostInfoKey, 'location' | 'poster' | 'status'>
     | 'views';
@@ -47,6 +55,8 @@ type PostCreateLocation = Omit<IPostLocation, 'coordinate' | 'address'> &
     Partial<Pick<IPostLocation, 'address'>>;
 type PostCreate = Omit<IPost, PostCreateKey>;
 type PostCompactForApp = Pick<IPost, PostCompactForAppKey>;
+type PostCompactForWebDashboard = Pick<IPost, PostCompactForWebDashboardKey>;
+type PostCompactForWeb = Pick<IPost, PostCompactForWebKey>;
 type PostInfo = Omit<IPost, PostInfoKey>;
 type PostUpdateForUser = Partial<Omit<IPost, PostUpdateForUserKey>>;
 type MyPostInfo = Omit<IPost, MyPostInfoKey>;
@@ -67,6 +77,15 @@ export type IPostDirection =
 export type IPostLegal = 'book' | 'saleContract' | 'waitingForBook';
 export type IPostSortValue = 'asc' | 'desc';
 export type IPostSort = Partial<Record<PostSortKey, IPostSortValue>>;
+export type IPostCompactModeEditorForWeb = Omit<
+    IPostCompactForWeb,
+    'prices' | 'acreages' | 'time'
+> &
+    Pick<IPost, 'status' | 'type'>;
+export type IPostCompactModeVerticalForWeb = Pick<
+    IPostCompactForWeb,
+    'title' | 'thumbnail' | 'prices' | 'acreages' | 'link' | 'address' | 'id'
+>;
 
 // Export Interfaces
 export interface IPoster {
@@ -129,6 +148,23 @@ export interface IPostCompactForApp extends PostCompactForApp {
     address: string;
     isVideo: boolean;
 }
+export interface IPostCompactForWebDashboard
+    extends PostCompactForWebDashboard {
+    id: string;
+    address: string;
+    thumbnail: string;
+    time: number;
+    link: string;
+}
+export interface IPostCompactForWeb extends PostCompactForWeb {
+    id: string;
+    images: number;
+    isVideo: boolean;
+    link: string;
+    time: number;
+    thumbnail: string;
+    address: string;
+}
 export interface IPostFilterByValue {
     min: number;
     max: number;
@@ -144,8 +180,9 @@ export interface IPostInfoForWeb extends PostInfo {
     time: number;
     contact: string;
     phoneNumber: string[];
+    avatar: string | null;
 }
-export interface IPostInfoForApp extends IPostInfoForWeb {
+export interface IPostInfoForApp extends Omit<IPostInfoForWeb, 'avatar'> {
     link: string;
 }
 export interface IPostUpdateForUser extends PostUpdateForUser {

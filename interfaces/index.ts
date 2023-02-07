@@ -1,3 +1,6 @@
+import type { ReactElement, ReactNode } from 'react';
+import type { NextPage } from 'next';
+
 // Helpers
 export * from './helpers';
 
@@ -46,6 +49,9 @@ export type ResJSON<T = null> =
     | ResultStatusError
     | ResultStatusMessage;
 export type ResUploadImageJSON = ResJSON<string> | ResultStatusImage;
+export type NextPageWithLayout<P = unknown, IP = P> = NextPage<P, IP> & {
+    getLayout?: (page: ReactElement) => ReactNode;
+};
 
 // Export Interfaces
 export interface IDataUserToken {
@@ -61,4 +67,13 @@ export interface IVersionJSON {
     mandatory: boolean;
     appStore: string;
     playStore: string;
+}
+export interface ISelectFilter {
+    value: string;
+    min: number;
+    max: number;
+}
+export interface ISelect {
+    value: string;
+    label: string;
 }
