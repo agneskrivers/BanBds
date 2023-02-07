@@ -414,6 +414,8 @@ PostSchema.statics.getInfoForWeb = async function (
         let contact = poster.name;
         let phoneNumber = poster.phoneNumber;
 
+        // FIXME: Get Avatar User Or Broker
+
         if (brokerID) {
             const broker = await BrokersModel.getInfo(brokerID);
 
@@ -430,6 +432,7 @@ PostSchema.statics.getInfoForWeb = async function (
             address,
             coordinate,
             time: new Date(createdAt).getTime(),
+            avatar: null,
         };
     } catch (error) {
         const { message } = error as Error;
