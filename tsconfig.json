@@ -28,6 +28,15 @@
         "paths": {
             "@interfaces": ["./interfaces/index.ts"],
 
+            // Client
+            "@client/components": ["./src/components/index.ts"],
+            "@client/components/*": ["./src/components/*"],
+            "@client/configs": ["./src/configs/index.ts"],
+            "@client/context/*": ["./src/context/*"],
+            "@client/helpers": ["./src/helpers/index.ts"],
+            "@client/layouts": ["./src/layouts/index.ts"],
+            "@client/scss/*": ["./src/scss/*"],
+
             // Server
             "@server/apis": ["./server/APIs/index.ts"],
             "@server/configs": ["./server/configs/index.ts"],
