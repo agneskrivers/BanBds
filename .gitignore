@@ -136,5 +136,9 @@ package-lock.json
 .env
 .next/
 uploads/
-public/images
-data
+public/images/avatars
+public/images/posts
+public/images/projects
+public/images/news
+data/
+demo/
