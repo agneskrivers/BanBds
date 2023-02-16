@@ -4,283 +4,153 @@ import type { ISelectFilter, ISelect } from '@interfaces';
 
 // ENV
 export const GoogleAPI = process.env.NEXT_PUBLIC_GOOGLE_API as string;
+export const HomePage = process.env.NEXT_PUBLIC_HOME_PAGE as string;
+export const LimitRenewOTP = parseInt(
+    process.env.NEXT_PUBLIC_LIMIT_RENEW_OTP as string
+);
+export const LimitFailedOTP = parseInt(
+    process.env.NEXT_PUBLIC_LIMIT_FAILED_OTP as string
+);
+
+// Regex
+export const regexPhoneNumber = /(0+(3|5|7|8|9|1[2|6|8|9]))+([0-9]{8})\b/;
 
 export const FilterPrices: ISelectFilter[] = [
     {
         value: '62afdd23fc13ae2e41000014',
         min: 0,
-        max: 1,
-    },
-    {
-        value: '62afdd23fc13ae2e41000015',
-        min: 1,
-        max: 2,
-    },
-    {
-        value: '62afdd23fc13ae2e41000016',
-        min: 2,
-        max: 3,
-    },
-    {
-        value: '62afdd23fc13ae2e41000017',
-        min: 4,
-        max: 5,
-    },
-    {
-        value: '62afdd23fc13ae2e41000018',
-        min: 6,
-        max: 7,
-    },
-    {
-        value: '62afdd23fc13ae2e41000019',
-        min: 7,
-        max: 8,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001a',
-        min: 8,
-        max: 9,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001b',
-        min: 9,
-        max: 10,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001c',
-        min: 10,
-        max: 12,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001d',
-        min: 12,
-        max: 14,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001e',
-        min: 14,
-        max: 16,
-    },
-    {
-        value: '62afdd23fc13ae2e4100001f',
-        min: 16,
-        max: 18,
-    },
-    {
-        value: '62afdd23fc13ae2e41000020',
-        min: 18,
-        max: 20,
-    },
-    {
-        value: '62afdd23fc13ae2e41000021',
-        min: 20,
-        max: 25,
-    },
-    {
-        value: '62afdd23fc13ae2e41000022',
-        min: 25,
-        max: 30,
-    },
-    {
-        value: '62afdd23fc13ae2e41000023',
-        min: 30,
-        max: 35,
-    },
-    {
-        value: '62afdd23fc13ae2e41000024',
-        min: 35,
-        max: 40,
-    },
-    {
-        value: '62afdd23fc13ae2e41000025',
-        min: 40,
-        max: 45,
-    },
-    {
-        value: '62afdd23fc13ae2e41000026',
-        min: 45,
-        max: 50,
-    },
-    {
-        value: '62afdd23fc13ae2e41000027',
-        min: 60,
-        max: 70,
-    },
-    {
-        value: '62afdd23fc13ae2e41000028',
-        min: 70,
-        max: 80,
-    },
-    {
-        value: '62afdd23fc13ae2e41000029',
-        min: 80,
-        max: 90,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002a',
-        min: 90,
-        max: 100,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002b',
-        min: 100,
-        max: 150,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002c',
-        min: 150,
-        max: 200,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002d',
-        min: 200,
-        max: 300,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002e',
-        min: 300,
-        max: 400,
-    },
-    {
-        value: '62afdd23fc13ae2e4100002f',
-        min: 400,
         max: 500,
     },
     {
-        value: '62afdd23fc13ae2e41000030',
-        min: 500,
+        value: '62afdd23fc13ae2e41000015',
+        min: 800,
         max: 1000,
     },
     {
-        value: '62afdd23fc13ae2e41000031',
+        value: '62afdd23fc13ae2e41000016',
         min: 1000,
+        max: 2000,
+    },
+    {
+        value: '62afdd23fc13ae2e41000017',
+        min: 2000,
+        max: 3000,
+    },
+    {
+        value: '62afdd23fc13ae2e41000018',
+        min: 3000,
+        max: 5000,
+    },
+    {
+        value: '62afdd23fc13ae2e41000019',
+        min: 5000,
+        max: 7000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001a',
+        min: 7000,
         max: 10000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001b',
+        min: 10000,
+        max: 20000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001c',
+        min: 20000,
+        max: 30000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001d',
+        min: 30000,
+        max: 40000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001e',
+        min: 40000,
+        max: 60000,
+    },
+    {
+        value: '62afdd23fc13ae2e4100001f',
+        min: 60000,
+        max: 0,
     },
 ];
 export const FilterAcreages: ISelectFilter[] = [
     {
         value: '2a069bc9-8db1-42ae-8bd7-017c8a6ee422',
         min: 0,
-        max: 20,
-    },
-    {
-        value: 'bce597b9-7122-4c42-92ba-d931d41f3986',
-        min: 20,
         max: 30,
     },
     {
-        value: '2690123f-a544-4ce0-9be2-5120b7002297',
+        value: 'bce597b9-7122-4c42-92ba-d931d41f3986',
         min: 30,
-        max: 40,
-    },
-    {
-        value: 'eb6bb2fc-c1b7-459c-bb5f-3f062e9ccdf8',
-        min: 40,
         max: 50,
     },
     {
-        value: '2d4fa709-b824-47d4-b391-c33d3ccfa287',
+        value: '2690123f-a544-4ce0-9be2-5120b7002297',
         min: 50,
-        max: 60,
-    },
-    {
-        value: 'd365603c-f8d5-4e34-b009-4df79c9a4511',
-        min: 60,
         max: 80,
     },
     {
-        value: 'a9e95e64-d099-41f4-ba05-0e5b42075d45',
+        value: 'eb6bb2fc-c1b7-459c-bb5f-3f062e9ccdf8',
         min: 80,
         max: 100,
     },
     {
-        value: 'b4a9d9bb-d156-4716-858e-268a878974c7',
+        value: '2d4fa709-b824-47d4-b391-c33d3ccfa287',
         min: 100,
-        max: 130,
+        max: 150,
     },
     {
-        value: 'eb267284-3e9d-4b95-b682-39e5180877b1',
-        min: 130,
-        max: 160,
-    },
-    {
-        value: '4b3427f5-e3ac-4ba7-9b5f-0e012014cf31',
-        min: 160,
+        value: 'd365603c-f8d5-4e34-b009-4df79c9a4511',
+        min: 150,
         max: 200,
     },
     {
-        value: '73b5552f-b115-49c5-a6bf-8940e41df7c5',
+        value: 'a9e95e64-d099-41f4-ba05-0e5b42075d45',
         min: 200,
         max: 250,
     },
     {
-        value: '6370b216-5399-49b4-baee-91f2823385cc',
-        min: 300,
-        max: 400,
+        value: 'b4a9d9bb-d156-4716-858e-268a878974c7',
+        min: 250,
+        max: 300,
     },
     {
-        value: 'f6ebfa57-99b3-4a0c-8a6e-418295d0ca16',
-        min: 400,
+        value: 'eb267284-3e9d-4b95-b682-39e5180877b1',
+        min: 300,
         max: 500,
     },
     {
-        value: 'a68f3629-9efc-4558-bfec-543c0287d52c',
+        value: '4b3427f5-e3ac-4ba7-9b5f-0e012014cf31',
         min: 500,
+        max: 600,
+    },
+    {
+        value: '73b5552f-b115-49c5-a6bf-8940e41df7c5',
+        min: 600,
         max: 700,
     },
     {
-        value: 'ecf45cca-276c-4bad-b02a-1bb46170dca1',
+        value: '6370b216-5399-49b4-baee-91f2823385cc',
         min: 700,
+        max: 800,
+    },
+    {
+        value: 'f6ebfa57-99b3-4a0c-8a6e-418295d0ca16',
+        min: 800,
+        max: 900,
+    },
+    {
+        value: 'a68f3629-9efc-4558-bfec-543c0287d52c',
+        min: 900,
         max: 1000,
     },
     {
-        value: 'd38b82cf-e234-4204-8c3c-2d954fe21f56',
+        value: 'ecf45cca-276c-4bad-b02a-1bb46170dca1',
         min: 1000,
-        max: 1500,
-    },
-    {
-        value: '116634e0-eada-49ad-99d8-212a92c78a27',
-        min: 1500,
-        max: 2000,
-    },
-    {
-        value: 'edbf87e5-03d0-44a4-9231-d751d7c57f47',
-        min: 2000,
-        max: 3000,
-    },
-    {
-        value: '11e38a87-44a1-4b3b-82d7-203260a34c22',
-        min: 3000,
-        max: 5000,
-    },
-    {
-        value: '5ff6eb41-a5e5-422f-b15c-706c786d4d8f',
-        min: 5000,
-        max: 7000,
-    },
-    {
-        value: '5c02926e-5efe-4b0b-8017-ace0fa4e4bcc',
-        min: 7000,
-        max: 10000,
-    },
-    {
-        value: 'd95fcbc5-0056-46fe-b1c0-b817f1df3be2',
-        min: 10000,
-        max: 20000,
-    },
-    {
-        value: 'de855959-37b0-43ca-b764-5668edc80420',
-        min: 20000,
-        max: 50000,
-    },
-    {
-        value: 'ecceda31-6cb5-4c5e-ae2f-4d07ed6132a8',
-        min: 50000,
-        max: 100000,
-    },
-    {
-        value: 'f6e1651a-fb2c-440a-8dad-9c816bc33902',
-        min: 100000,
         max: 0,
     },
 ];
@@ -322,6 +192,7 @@ export const FilterProjects: ISelectFilter[] = [
     },
 ];
 
+// Select Post
 export const SelectSorts: ISelect[] = [
     {
         value: 'normally',
@@ -451,10 +322,14 @@ export const SelectFilterPrices: ISelect[] = [...FilterPrices].map(
         value,
         label:
             min === 0
-                ? '<= 1 tỷ'
-                : min === 1000
-                ? '> 1000 tỷ'
-                : `${min} tỷ - ${max} tỷ`,
+                ? 'Dưới 500 triệu'
+                : max === 0
+                ? 'Trên 60 tỷ'
+                : `${min >= 1000 ? min / 1000 : min} ${
+                      min >= 1000 ? 'tỷ' : 'triệu'
+                  } - ${max >= 1000 ? max / 1000 : max} ${
+                      max >= 1000 ? 'tỷ' : 'triệu'
+                  }`,
     })
 );
 export const SelectFilterAcreages: ISelect[] = [...FilterAcreages].map(
@@ -462,12 +337,14 @@ export const SelectFilterAcreages: ISelect[] = [...FilterAcreages].map(
         value,
         label:
             min === 0
-                ? 'Dưới 20 m²'
+                ? 'Dưới 30 m²'
                 : max === 0
-                ? `Trên ${min.toLocaleString('en')} m²`
+                ? 'Trên 1,000 m²'
                 : `${min.toLocaleString()} m² - ${max.toLocaleString()} m²`,
     })
 );
+
+// Select Project
 export const SelectFilterPricesProject: ISelect[] = [...FilterProjects].map(
     ({ value, min, max }) => ({
         value,
@@ -479,3 +356,42 @@ export const SelectFilterPricesProject: ISelect[] = [...FilterProjects].map(
                 : `${min} - ${max} triệu/m²`,
     })
 );
+export const SelectFilterStatusProject: ISelect[] = [
+    {
+        value: 'handedOver',
+        label: 'Đã bàn giao',
+    },
+    {
+        value: 'onSale',
+        label: 'Đang mở bán',
+    },
+    {
+        value: 'openingSoon',
+        label: 'Sắp mở bán',
+    },
+];
+export const SelectFilterTypeProject: ISelect[] = [
+    {
+        value: 'apartment',
+        label: 'Chung cư',
+    },
+    {
+        value: 'land',
+        label: 'Đất nền',
+    },
+];
+
+export const SelectFormType: ISelect[] = [
+    {
+        label: 'Mua bán',
+        value: 'sell',
+    },
+    {
+        label: 'Cho thuê',
+        value: 'rent',
+    },
+    {
+        value: 'request',
+        label: 'Yêu cầu',
+    },
+];
