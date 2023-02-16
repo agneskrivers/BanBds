@@ -8,7 +8,7 @@ import { handleError } from '@server/helpers';
 import { ProjectsModel } from '@server/models';
 
 // Interfaces
-import type { ResJSON, IProjectInfoForApp } from '@interfaces';
+import type { ResJSON, IProjectInfo } from '@interfaces';
 
 // Request Interface
 interface ReqParams {
@@ -18,7 +18,7 @@ interface ReqParams {
 // Function Type
 type ApiAppProjectInfo = (
     req: Request<ReqParams>,
-    res: Response<ResJSON<IProjectInfoForApp>>
+    res: Response<ResJSON<IProjectInfo>>
 ) => Promise<void>;
 
 const Index: ApiAppProjectInfo = async (req, res) => {
@@ -33,7 +33,7 @@ const Index: ApiAppProjectInfo = async (req, res) => {
             return;
         }
 
-        const data = await ProjectsModel.getInfoForApp(parseInt(projectID));
+        const data = await ProjectsModel.getInfo(parseInt(projectID));
 
         if (!data) {
             const { statusCode, message } = new createHttpError.BadRequest();
