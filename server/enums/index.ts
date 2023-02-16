@@ -7,6 +7,7 @@ export enum LengthID {
     user = 6,
     post = 8,
     project = 5,
+    news = 7,
 }
 export enum LimitOTP {
     minute = 60 * 60 * 1000,
