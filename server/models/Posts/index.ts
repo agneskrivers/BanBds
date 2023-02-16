@@ -8,10 +8,17 @@ import {
     getAddress,
     getPages,
     convertToEnglish,
+    getLink,
 } from '@server/helpers';
 
 // Models
-import { UsersModel, ImagesModel, BrokersModel } from '@server/models';
+import {
+    UsersModel,
+    ImagesModel,
+    BrokersModel,
+    RegionsModel,
+    DistrictsModel,
+} from '@server/models';
 
 // Services
 import services from '@server/services';
@@ -31,6 +38,16 @@ import type {
     IMyPostInfo,
     IImage,
     IPostUpdateForUser,
+    IResultGetShortlistForWeb,
+    IPostCompactForWeb,
+    IApiWebPostMyShortlist,
+    IPostCompactModeEditorForWeb,
+    IPostResultGetForDashboardWeb,
+    IPostCompactForWebDashboard,
+    IPostTotalsByAreaDashboardWeb,
+    IPostCompactModeVerticalForWeb,
+    IPostResultGetForNews,
+    ITotalsByAreas,
 } from '@interfaces';
 
 // Type
@@ -68,17 +85,49 @@ interface PostModel extends Model<IPost, Record<string, string>, PostMethods> {
         filter?: IPostFilter,
         sort?: IPostSort
     ): Promise<ResultGetShortlistForApp | null>;
+    getShortlistForWeb(
+        page: number,
+        type: IPostType,
+        region?: string,
+        district?: string,
+        search?: string,
+        project?: string,
+        filter?: IPostFilter,
+        sort?: IPostSort
+    ): Promise<IResultGetShortlistForWeb | null>;
+
     getMyShortlistForApp(
         page: number,
         userID: number,
         type: IPostType,
         status: Exclude<IPostStatus, 'sold'>
     ): Promise<ResultGetMyShortlistForApp | null>;
+    getMyShortlistForWeb(
+        page: number,
+        userID: number,
+        status?: IPostStatus
+    ): Promise<IApiWebPostMyShortlist | null>;
 
     getMyPostInfo(postID: number, userID: number): Promise<IMyPostInfo | null>;
 
     getInfoForApp(postID: number): Promise<IPostInfoForApp | null>;
     getInfoForWeb(postID: number): Promise<IPostInfoForWeb | null>;
+
+    getForDashboardWeb(
+        type: IPostType,
+        page: number
+    ): Promise<IPostResultGetForDashboardWeb | null>;
+    getForProject(
+        project: string
+    ): Promise<IPostCompactModeVerticalForWeb[] | null>;
+    getForNews(): Promise<IPostResultGetForNews | null>;
+
+    getTotalsByAreasForDashboardWeb(): Promise<IPostTotalsByAreaDashboardWeb | null>;
+
+    getTotalsByAreas(
+        type: IPostType,
+        id?: string
+    ): Promise<ITotalsByAreas[] | null>;
 }
 
 // Schema
@@ -131,21 +180,10 @@ const PostSchema = new Schema<IPost, PostModel, PostMethods>(
         },
         direction: {
             type: String,
-            enums: [
-                'east',
-                'west',
-                'south',
-                'north',
-                'northeast',
-                'northwest',
-                'southwest',
-                'southeast',
-            ],
             default: null,
         },
         legal: {
             type: String,
-            enum: ['book', 'saleContract', 'waitingForBook'],
             default: null,
         },
         facades: { type: Number, default: null },
@@ -269,8 +307,18 @@ PostSchema.statics.getShortlistForApp = async function (
         }
 
         if (search) {
-            doc.find({ title: { $regex: search } });
-            count.countDocuments({ title: { $regex: search } });
+            doc.find({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
+            count.countDocuments({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
         }
 
         if (filter) {
@@ -350,6 +398,145 @@ PostSchema.statics.getShortlistForApp = async function (
         return null;
     }
 };
+PostSchema.statics.getShortlistForWeb = async function (
+    page: number,
+    type: IPostType,
+    region?: string,
+    district?: string,
+    search?: string,
+    project?: string,
+    filter?: IPostFilter,
+    sort?: IPostSort
+): Promise<IResultGetShortlistForWeb | null> {
+    try {
+        const doc = this.find({ type, status: 'accept' });
+        const count = this.countDocuments({ type, status: 'accept' });
+
+        if (region) {
+            doc.find({ 'location.region': region });
+            count.countDocuments({
+                'location.region': region,
+            });
+        }
+
+        if (district) {
+            doc.find({ 'location.district': district });
+            count.countDocuments({ 'location.district': district });
+        }
+
+        if (search) {
+            doc.find({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
+            count.countDocuments({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
+        }
+
+        if (project) {
+            doc.find({ project });
+            count.countDocuments({ project });
+        }
+
+        if (filter) {
+            const { acreages, category, prices } = filter;
+
+            if (category) {
+                doc.find({ category });
+                count.countDocuments({ category });
+            }
+
+            if (acreages) {
+                const { max, min } = acreages;
+
+                doc.find({ acreages: { $gt: min - 1, $lt: max + 1 } });
+                count.countDocuments({
+                    acreages: { $gt: min - 1, $lt: max + 1 },
+                });
+            }
+
+            if (prices) {
+                const { max, min } = prices;
+
+                doc.find({ prices: { $gt: min - 1, $lt: max + 1 } });
+                count.countDocuments({
+                    prices: { $gt: min - 1, $lt: max + 1 },
+                });
+            }
+        }
+
+        if (sort) {
+            const { acreages, createdAt, prices } = sort;
+
+            if (acreages) {
+                doc.sort({ acreages });
+            }
+
+            if (createdAt) {
+                doc.sort({ createdAt });
+            }
+
+            if (prices) {
+                doc.sort({ prices });
+            }
+        } else {
+            doc.sort({ createdAt: -1 });
+        }
+
+        const list = await doc
+            .skip(page * 10)
+            .limit(10)
+            .select(
+                'title acreages prices images video createdAt postID location type'
+            );
+
+        const totals = await count.exec();
+        const pages = getPages(totals);
+
+        const posts: IPostCompactForWeb[] = [...list].map((item) => {
+            const {
+                _id,
+                images,
+                video,
+                postID,
+                createdAt,
+                location,
+                title,
+                ...result
+            } = item.toObject();
+
+            return {
+                ...result,
+                id: _id.toString(),
+                address: location.address,
+                thumbnail: images[0],
+                images: images.length,
+                time: new Date(createdAt).getTime(),
+                isVideo: video !== null,
+                link: getLink.post(title, postID),
+                title,
+            };
+        });
+
+        return {
+            totals,
+            pages,
+            posts,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Static Get Shortlist For Web', message);
+
+        return null;
+    }
+};
 PostSchema.statics.getMyShortlistForApp = async function (
     page: number,
     userID: number,
@@ -390,6 +577,52 @@ PostSchema.statics.getMyShortlistForApp = async function (
         return null;
     }
 };
+PostSchema.statics.getMyShortlistForWeb = async function (
+    page: number,
+    userID: number,
+    status?: IPostStatus
+): Promise<IApiWebPostMyShortlist | null> {
+    try {
+        const doc = this.find({ userID });
+        const count = this.countDocuments({ userID });
+
+        if (status) {
+            doc.find({ status });
+            count.countDocuments({ status });
+        }
+
+        const list = await doc
+            .skip(page * 10)
+            .limit(10)
+            .select('status type title images location video postID');
+        const totals = await count.exec();
+
+        const pages = getPages(totals);
+        const posts: IPostCompactModeEditorForWeb[] = [...list].map((item) => {
+            const { _id, images, location, video, ...result } = item.toObject();
+
+            return {
+                ...result,
+                id: _id.toString(),
+                thumbnail: images[0],
+                images: images.length,
+                isVideo: video !== null,
+                address: location.address,
+            };
+        });
+
+        return {
+            pages,
+            posts,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Static Get My Shortlist For Web', message);
+
+        return null;
+    }
+};
 PostSchema.statics.getInfoForWeb = async function (
     postID: number
 ): Promise<IPostInfoForWeb | null> {
@@ -397,7 +630,7 @@ PostSchema.statics.getInfoForWeb = async function (
         const post = await this.findOne(
             { postID },
             { projection: { _id: 0 } }
-        ).select('userID updatedAt editor status postID');
+        ).select('updatedAt editor status postID');
 
         if (!post) return null;
 
@@ -406,6 +639,7 @@ PostSchema.statics.getInfoForWeb = async function (
             poster,
             broker: brokerID,
             createdAt,
+            userID,
             ...result
         } = post.toObject();
 
@@ -413,8 +647,9 @@ PostSchema.statics.getInfoForWeb = async function (
 
         let contact = poster.name;
         let phoneNumber = poster.phoneNumber;
-
-        // FIXME: Get Avatar User Or Broker
+        let avatar: string | null = null;
+        let zalo: string | null = null;
+        let facebook: string | null = null;
 
         if (brokerID) {
             const broker = await BrokersModel.getInfo(brokerID);
@@ -422,6 +657,15 @@ PostSchema.statics.getInfoForWeb = async function (
             if (broker) {
                 contact = broker.name;
                 phoneNumber = broker.phoneNumber;
+                avatar = broker.avatar;
+                zalo = broker.zalo;
+                facebook = broker.facebook;
+            }
+        } else {
+            const user = await UsersModel.findOne({ userID });
+
+            if (user) {
+                avatar = user.avatar;
             }
         }
 
@@ -432,7 +676,9 @@ PostSchema.statics.getInfoForWeb = async function (
             address,
             coordinate,
             time: new Date(createdAt).getTime(),
-            avatar: null,
+            avatar,
+            zalo,
+            facebook,
         };
     } catch (error) {
         const { message } = error as Error;
@@ -476,7 +722,7 @@ PostSchema.statics.getMyPostInfo = async function (
         const post = await this.findOne(
             { postID, userID },
             { projection: { _id: 0 } }
-        ).select('createdAt -postID -userID -broker -views -editor -updatedAt');
+        ).select('createdAt -userID -broker -views -editor -updatedAt');
 
         if (!post) return null;
 
@@ -490,6 +736,262 @@ PostSchema.statics.getMyPostInfo = async function (
         const { message } = error as Error;
 
         handleError('Model Posts', message);
+
+        return null;
+    }
+};
+PostSchema.statics.getForDashboardWeb = async function (
+    type: IPostType,
+    page: number
+): Promise<IPostResultGetForDashboardWeb | null> {
+    try {
+        const list = await this.find({ type, status: 'accept' })
+            .sort({ createdAt: -1 })
+            .limit(6)
+            .skip(page * 6)
+            .select(
+                'title acreages prices direction facades ways location createdAt images postID category type'
+            );
+        const totals = await this.countDocuments({ type, status: 'accept' });
+
+        if (totals < 6) return null;
+
+        const pages = getPages(totals, 6);
+        const posts: IPostCompactForWebDashboard[] = [...list].map((item) => {
+            const {
+                _id,
+                location,
+                images,
+                createdAt,
+                postID,
+                title,
+                ...result
+            } = item.toObject();
+
+            const { address } = location;
+            const id = _id.toString();
+            const link = getLink.post(title, postID);
+            const time = new Date(createdAt).getTime();
+            const thumbnail = images[0];
+
+            return {
+                ...result,
+                id,
+                address,
+                link,
+                time,
+                thumbnail,
+                title,
+            };
+        });
+
+        return {
+            pages,
+            posts,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Static Get For Dashboard Web', message);
+
+        return null;
+    }
+};
+PostSchema.statics.getForProject = async function (
+    project: string
+): Promise<IPostCompactModeVerticalForWeb[] | null> {
+    try {
+        const posts = await this.find({ project, status: 'accept' }).select(
+            'title images prices acreages postID location type'
+        );
+
+        if (posts.length === 0) return null;
+
+        const result: IPostCompactModeVerticalForWeb[] = [...posts].map(
+            (item) => {
+                const { _id, location, title, postID, images, ...result } =
+                    item.toObject();
+
+                const id = _id.toString();
+                const thumbnail = images[0];
+                const link = getLink.project(title, postID);
+                const { address } = location;
+
+                return {
+                    ...result,
+                    id,
+                    thumbnail,
+                    link,
+                    address,
+                    title,
+                };
+            }
+        );
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Static Get For Project', message);
+
+        return null;
+    }
+};
+PostSchema.statics.getForNews =
+    async function (): Promise<IPostResultGetForNews | null> {
+        try {
+            let sell: IPostCompactModeVerticalForWeb[] | null = null;
+            let rent: IPostCompactModeVerticalForWeb[] | null = null;
+
+            const listSell = await this.find({
+                type: 'sell',
+                status: 'accept',
+            }).select('title images prices acreages postID location type');
+            const listRent = await this.find({
+                type: 'rent',
+                status: 'accept',
+            }).select('title images prices acreages postID location type');
+
+            if (listSell.length >= 4) {
+                sell = [...listSell].slice(0, 4).map((item) => {
+                    const { _id, title, postID, images, location, ...result } =
+                        item.toObject();
+
+                    const id = _id.toString();
+                    const thumbnail = images[0];
+                    const { address } = location;
+                    const link = getLink.post(title, postID);
+
+                    return {
+                        ...result,
+                        id,
+                        title,
+                        thumbnail,
+                        address,
+                        link,
+                    };
+                });
+            }
+
+            if (listRent.length >= 4) {
+                rent = [...listRent].slice(0, 4).map((item) => {
+                    const { _id, title, postID, images, location, ...result } =
+                        item.toObject();
+
+                    const id = _id.toString();
+                    const thumbnail = images[0];
+                    const { address } = location;
+                    const link = getLink.post(title, postID);
+
+                    return {
+                        ...result,
+                        id,
+                        title,
+                        thumbnail,
+                        address,
+                        link,
+                    };
+                });
+            }
+
+            if (sell === null && rent === null) return null;
+
+            return {
+                rent,
+                sell,
+            };
+        } catch (error) {
+            const { message } = error as Error;
+
+            handleError('Model Posts Static Get For News', message);
+
+            return null;
+        }
+    };
+PostSchema.statics.getTotalsByAreasForDashboardWeb =
+    async function (): Promise<IPostTotalsByAreaDashboardWeb | null> {
+        try {
+            const hn = await this.countDocuments({
+                'location.region': 'HN',
+                status: 'accept',
+            });
+            const hcm = await this.countDocuments({
+                'location.region': 'SG',
+                status: 'accept',
+            });
+            const bn = await this.countDocuments({
+                'location.region': 'BN',
+                status: 'accept',
+            });
+            const bg = await this.countDocuments({
+                'location.region': 'BG',
+                status: 'accept',
+            });
+            const hd = await this.countDocuments({
+                'location.region': 'HD',
+                status: 'accept',
+            });
+
+            return { hn, hcm, bn, bg, hd };
+        } catch (error) {
+            const { message } = error as Error;
+
+            handleError(
+                'Model Posts Static Get Totals By Areas For Dashboard Web',
+                message
+            );
+
+            return null;
+        }
+    };
+PostSchema.statics.getTotalsByAreas = async function (
+    type: IPostType,
+    id?: string
+): Promise<ITotalsByAreas[] | null> {
+    try {
+        let result: ITotalsByAreas[] = [];
+
+        if (id) {
+            const getDistrict = await DistrictsModel.findOne({ regionID: id });
+
+            if (!getDistrict) return null;
+
+            const { districts } = getDistrict.toObject();
+
+            for (const district of districts) {
+                const { districtID, name } = district;
+
+                const totals = await this.countDocuments({
+                    'location.district': districtID,
+                    type,
+                    status: 'accept',
+                });
+
+                result = [...result, { name, totals, id: districtID }];
+            }
+
+            return result;
+        }
+
+        const regions = await RegionsModel.find({ isActive: true });
+
+        for (const region of regions) {
+            const { regionID, name } = region.toObject();
+
+            const totals = await this.countDocuments({
+                'location.region': regionID,
+                type,
+                status: 'accept',
+            });
+
+            result = [...result, { name, totals, id: regionID }];
+        }
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Posts Static Get Totals By Areas', message);
 
         return null;
     }

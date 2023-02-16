@@ -4,12 +4,13 @@ import { model, Model, Schema } from 'mongoose';
 import { handleError } from '@server/helpers';
 
 // Interfaces
-import type { IRegion, IRegionCompact } from '@interfaces';
+import type { IRegion, IRegionCompact, ISelect } from '@interfaces';
 
 // Modal Interface
 interface RegionModel extends Model<IRegion> {
     getName(regionID: string): Promise<string | null>;
     getShortlist(): Promise<IRegionCompact[] | null>;
+    getListSelect(): Promise<ISelect[] | null>;
 }
 
 // Schema
@@ -66,6 +67,24 @@ RegionSchema.statics.getShortlist = async function () {
         const { message } = error as Error;
 
         handleError('Model Regions Static Get Shortlist', message);
+
+        return null;
+    }
+};
+RegionSchema.statics.getListSelect = async function () {
+    try {
+        const regions = await this.find({ isActive: true }).sort('serial');
+
+        const result: ISelect[] = [...regions].map((item) => ({
+            value: item.regionID,
+            label: item.name,
+        }));
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Regions Static Get List Select', message);
 
         return null;
     }

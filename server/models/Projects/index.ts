@@ -1,18 +1,26 @@
 import { model, Model, Schema } from 'mongoose';
 
 // Helpers
-import { handleError, getPages, convertToEnglish } from '@server/helpers';
+import { handleError, getPages, getLink } from '@server/helpers';
 
 // Models
-import { InvestorsModel } from '@server/models';
+import { InvestorsModel, RegionsModel, DistrictsModel } from '@server/models';
 
 // Interfaces
 import type {
     IInvestor,
     IProject,
     IProjectCompactForApp,
-    IProjectInfoForApp,
+    IProjectInfo,
     IResultGetShortlistForApp,
+    ISelect,
+    IProjectCompactForWebDashboard,
+    ITotalsByAreas,
+    IProjectStatus,
+    IProjectType,
+    IProjectResultGetShortlistForWeb,
+    IPostFilterByValue,
+    IProjectCompactForWeb,
 } from '@interfaces';
 
 // Model Interface
@@ -22,7 +30,19 @@ interface ProjectModel extends Model<IProject> {
         region: string,
         id?: string
     ): Promise<IResultGetShortlistForApp | null>;
-    getInfoForApp(projectID: number): Promise<IProjectInfoForApp | null>;
+    getShortlistForWeb(
+        page: number,
+        region?: string,
+        district?: string,
+        search?: string,
+        type?: IProjectType,
+        status?: IProjectStatus,
+        prices?: IPostFilterByValue
+    ): Promise<IProjectResultGetShortlistForWeb | null>;
+    getInfo(projectID: number): Promise<IProjectInfo | null>;
+    getListSelectForWeb(): Promise<ISelect[] | null>;
+    getForDashboardWeb(): Promise<IProjectCompactForWebDashboard[] | null>;
+    getTotalsByAreas(id?: string): Promise<ITotalsByAreas[] | null>;
 }
 
 // Schema
@@ -172,14 +192,136 @@ ProjectSchema.statics.getShortlistForApp = async function (
         return null;
     }
 };
-ProjectSchema.statics.getInfoForApp = async function (
-    projectID: number
-): Promise<IProjectInfoForApp | null> {
+ProjectSchema.statics.getShortlistForWeb = async function (
+    page: number,
+    region?: string,
+    district?: string,
+    search?: string,
+    type?: IProjectType,
+    status?: IProjectStatus,
+    prices?: IPostFilterByValue
+): Promise<IProjectResultGetShortlistForWeb | null> {
     try {
-        const project = await this.findOne(
-            { projectID },
-            { projection: { _id: 0 } }
-        ).select(
+        const doc = this.find();
+        const count = this.countDocuments();
+
+        if (region) {
+            doc.find({ 'location.region': region });
+            count.countDocuments({ 'location.region': region });
+        }
+
+        if (district) {
+            doc.find({ 'location.district': district });
+            count.countDocuments({ 'location.district': district });
+        }
+
+        if (search) {
+            doc.find({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
+            count.countDocuments({
+                $or: [
+                    { title: { $regex: search, $options: 'i' } },
+                    { 'location.address': { $regex: search, $options: 'i' } },
+                ],
+            });
+        }
+
+        if (type) {
+            doc.find({ type });
+            count.countDocuments({ type });
+        }
+
+        if (status) {
+            doc.find({ status });
+            count.countDocuments({ status });
+        }
+
+        if (prices) {
+            const { min, max } = prices;
+
+            doc.find({
+                prices: { $gt: min - 1, $lt: max + 1 },
+            });
+            count.countDocuments({ prices: { $gt: min - 1, $lt: max + 1 } });
+        }
+
+        const list = await doc
+            .limit(10)
+            .skip(page * 10)
+            .select(
+                'title prices status type acreages images location investor overview projectID'
+            );
+
+        const totals = await count.exec();
+        const pages = getPages(totals);
+        const projects: IProjectCompactForWeb[] = await Promise.all(
+            [...list].map(async (item): Promise<IProjectCompactForWeb> => {
+                const {
+                    _id,
+                    title,
+                    images,
+                    overview,
+                    location,
+                    projectID,
+                    investor: investorID,
+                    ...result
+                } = item.toObject();
+
+                const id = _id.toString();
+                const thumbnail = images[0];
+                const { address } = location;
+                const link = getLink.project(title, projectID);
+
+                let numberOfApartments: number | null = null;
+                let courtNumber: number | null = null;
+                let investor: IInvestor | null = null;
+
+                if (overview) {
+                    numberOfApartments = overview.numberOfApartments;
+                    courtNumber = overview.courtNumber;
+                }
+
+                if (investorID) {
+                    investor = await InvestorsModel.getInfo(investorID);
+                }
+
+                return {
+                    ...result,
+                    title,
+                    id,
+                    thumbnail,
+                    images: images.length,
+                    numberOfApartments,
+                    courtNumber,
+                    investor,
+                    address,
+                    link,
+                };
+            })
+        );
+
+        return {
+            pages,
+            projects,
+            totals,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Projects Static Get Shortlist For Web', message);
+
+        return null;
+    }
+};
+ProjectSchema.statics.getInfo = async function (
+    projectID: number
+): Promise<IProjectInfo | null> {
+    try {
+        const project = await this.findOne({ projectID }).select(
             'acreages content overview type prices status title images investor location'
         );
 
@@ -188,8 +330,14 @@ ProjectSchema.statics.getInfoForApp = async function (
         const {
             location,
             investor: investorID,
+            title,
+            _id,
             ...result
         } = project.toObject();
+
+        const link = getLink.project(title, projectID);
+        const id = _id.toString();
+        const { address, coordinate } = location;
 
         let investor: IInvestor | null = null;
 
@@ -203,23 +351,142 @@ ProjectSchema.statics.getInfoForApp = async function (
             }
         }
 
-        const regexSpace = /\s/gi;
-        // eslint-disable-next-line no-useless-escape
-        const regex = /(\,|\.)/gi;
-
         return {
             ...result,
-            coordinate: location.coordinate,
-            address: location.address,
+            coordinate,
+            address,
             investor,
-            link: `du-an/${convertToEnglish(decodeURI(result.title))
-                .replaceAll(regexSpace, '-')
-                .replaceAll(regex, '')}-${result.projectID}`,
+            link,
+            title,
+            id,
         };
     } catch (error) {
         const { message } = error as Error;
 
         handleError('Model Projects Static Get Info For App', message);
+
+        return null;
+    }
+};
+ProjectSchema.statics.getListSelectForWeb = async function () {
+    try {
+        const list = await this.find();
+
+        const result: ISelect[] = [...list].map((item) => {
+            const { _id, title } = item.toObject();
+
+            return {
+                value: _id.toString(),
+                label: decodeURI(title),
+            };
+        });
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Projects Static Get List Select For Web', message);
+
+        return null;
+    }
+};
+ProjectSchema.statics.getForDashboardWeb = async function () {
+    try {
+        const projects = await this.find()
+            .sort({ views: -1 })
+            .limit(3)
+            .select(
+                'title acreages prices status investor images projectID location type'
+            );
+        const totals = await this.countDocuments();
+
+        if (totals < 3) return null;
+
+        const result: IProjectCompactForWebDashboard[] = await Promise.all(
+            [...projects].map(
+                async (item): Promise<IProjectCompactForWebDashboard> => {
+                    const {
+                        _id,
+                        location,
+                        images,
+                        investor: investorID,
+                        projectID,
+                        title,
+                        ...result
+                    } = item.toObject();
+
+                    const id = _id.toString();
+                    const { address } = location;
+                    const link = getLink.project(title, projectID);
+
+                    let investor: string | null = null;
+
+                    if (investorID) {
+                        investor = await InvestorsModel.getName(investorID);
+                    }
+
+                    return {
+                        ...result,
+                        thumbnail: images[0],
+                        title,
+                        id,
+                        address,
+                        link,
+                        investor,
+                    };
+                }
+            )
+        );
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Projects Static Get For Web Dashboard', message);
+        return null;
+    }
+};
+ProjectSchema.statics.getTotalsByAreas = async function (id?: string) {
+    try {
+        let result: ITotalsByAreas[] = [];
+
+        if (id) {
+            const getDistrict = await DistrictsModel.findOne({ regionID: id });
+
+            if (!getDistrict) return null;
+
+            const { districts } = getDistrict.toObject();
+
+            for (const district of districts) {
+                const { districtID, name } = district;
+
+                const totals = await this.countDocuments({
+                    'location.district': districtID,
+                });
+
+                result = [...result, { name, totals, id: districtID }];
+            }
+
+            return result;
+        }
+
+        const regions = await RegionsModel.find({ isActive: true });
+
+        for (const region of regions) {
+            const { regionID, name } = region.toObject();
+
+            const totals = await this.countDocuments({
+                'location.region': regionID,
+            });
+
+            result = [...result, { name, totals, id: regionID }];
+        }
+
+        return result;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Projects Static Get Totals By Areas', message);
 
         return null;
     }
