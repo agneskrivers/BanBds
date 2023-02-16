@@ -5,8 +5,14 @@ import type { ILinkJSON, IVersionJSON } from '@interfaces';
 
 export const MongoURI = process.env.MONGO_URI as string;
 export const SecretJWT = process.env.SECRET_JWT as string;
-export const LimitRenewOTP = parseInt(process.env.LIMIT_RENEW_OTP as string);
-export const LimitFailedOTP = parseInt(process.env.LIMIT_FAILED_OTP as string);
+export const SecretCookie = process.env.SECRET_COOKIE as string;
+export const SecretSession = process.env.SECRET_SESSION as string;
+export const LimitRenewOTP = parseInt(
+    process.env.NEXT_PUBLIC_LIMIT_RENEW_OTP as string
+);
+export const LimitFailedOTP = parseInt(
+    process.env.NEXT_PUBLIC_LIMIT_FAILED_OTP as string
+);
 export const ESmsApiKey = process.env.ESMS_API_KEY as string;
 export const ESmsSecretKey = process.env.ESMS_SECRET_KEY as string;
 
