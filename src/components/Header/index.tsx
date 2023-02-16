@@ -1,4 +1,9 @@
-import React, { FunctionComponent, useContext, useState } from 'react';
+import React, {
+    FunctionComponent,
+    useContext,
+    useState,
+    useEffect,
+} from 'react';
 import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,6 +13,9 @@ import { Button, Image as ImageBootstrap } from 'react-bootstrap';
 // Styles
 import Styles from './style/index.module.scss';
 
+// Components
+import { LoginComponent } from '@client/components';
+
 // Context
 import { Context } from '@client/context/Web';
 
@@ -15,13 +23,57 @@ const Index: FunctionComponent = () => {
     // States
     const [isMenu, setIsMenu] = useState<boolean>(false);
     const [isUser, setIsUser] = useState<boolean>(false);
+    const [isLogin, setIsLogin] = useState<boolean>(false);
 
     // Hooks
+    const router = useRouter();
     const { user, onLogout } = useContext(Context);
+
+    // Effects
+    useEffect(() => {
+        const handleChange = () => {
+            setIsMenu(false);
+            setIsUser(false);
+        };
+
+        router.events.on('routeChangeStart', handleChange);
+
+        return () => router.events.off('routeChangeStart', handleChange);
+    }, [router]);
+
+    // Handles
+    const handleToggleMenu = () => setIsMenu((preIsMenu) => !preIsMenu);
+    const handleToggleUser = () => setIsUser((preIsUser) => !preIsUser);
+    const handleCloseLogin = () => setIsLogin(false);
+
+    const handleClickBg = () => {
+        if (isMenu) {
+            setIsMenu(false);
+        }
+
+        if (isUser) {
+            setIsUser(false);
+        }
+    };
+    const handleClickLogin = () => setIsLogin(true);
+    const handleClickLogout = () => {
+        if (isMenu) {
+            setIsMenu(false);
+        }
+
+        if (isUser) {
+            setIsUser(false);
+        }
+
+        onLogout();
+    };
 
     return (
         <>
-            <div className={classNames({ [Styles.bg]: false })} />
+            <div
+                className={classNames({ [Styles.bg]: isUser || isMenu })}
+                onClick={handleClickBg}
+            />
             <header className={Styles.header}>
                 <div className={Styles.content}>
                     <div
@@ -45,33 +97,33 @@ const Index: FunctionComponent = () => {
                                 </>
                             </Link>
                         </h1>
-                        <Link
-                            href='/mua-ban-nha-dat'
+                        <a
+                            href='/ban-bat-dong-san'
                             className={classNames(
                                 Styles.menu_item,
                                 Styles.menu_item_bg
                             )}
                         >
                             Mua bán
-                        </Link>
-                        <Link
-                            href='/cho-thue-nha-dat'
+                        </a>
+                        <a
+                            href='/cho-thue-bat-dong-san'
                             className={classNames(
                                 Styles.menu_item,
                                 Styles.menu_item_bg
                             )}
                         >
                             Cho thuê
-                        </Link>
-                        <Link
-                            href='/du-an'
+                        </a>
+                        <a
+                            href='/du-an-bat-dong-san'
                             className={classNames(
                                 Styles.menu_item,
                                 Styles.menu_item_bg
                             )}
                         >
                             Dự án
-                        </Link>
+                        </a>
                         <Link
                             href='/tin-tuc'
                             className={classNames(
@@ -90,12 +142,15 @@ const Index: FunctionComponent = () => {
                                 className={Styles.menu_box}
                                 style={{ border: 'none' }}
                             >
-                                <div className={Styles.menu_avatar}>
+                                <div
+                                    className={Styles.menu_avatar}
+                                    onClick={handleToggleUser}
+                                >
                                     <ImageBootstrap
                                         src={
                                             user.avatar
                                                 ? `/images/avatars/${user.avatar}`
-                                                : '/images/avatar-default.png'
+                                                : '/images/common/avatar.png'
                                         }
                                         width={20}
                                         height={20}
@@ -205,7 +260,7 @@ const Index: FunctionComponent = () => {
                                     <Button
                                         className={Styles.avatar_logout}
                                         variant='outline_danger'
-                                        onClick={onLogout}
+                                        onClick={handleClickLogout}
                                     >
                                         Đăng xuất
                                     </Button>
@@ -224,7 +279,10 @@ const Index: FunctionComponent = () => {
                                 </>
                             </Link>
                             {!user && (
-                                <button className={Styles.menu_item}>
+                                <button
+                                    className={Styles.menu_item}
+                                    onClick={handleClickLogin}
+                                >
                                     Đăng nhập
                                 </button>
                             )}
@@ -242,12 +300,16 @@ const Index: FunctionComponent = () => {
                                 </Link>
                             </div>
                         </div>
-                        <Button className={Styles.menu_mobile}>
+                        <Button
+                            className={Styles.menu_mobile}
+                            onClick={handleToggleMenu}
+                        >
                             <i className='material-icons-outlined'>menu</i>
                         </Button>
                     </div>
                 </div>
             </header>
+            {isLogin && <LoginComponent.Web onClose={handleCloseLogin} />}
         </>
     );
 };
