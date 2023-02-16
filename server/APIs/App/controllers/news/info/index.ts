@@ -25,7 +25,7 @@ const Index: ApiAppNewsInfo = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const data = await NewsModel.getInfo(id);
+        const data = await NewsModel.getInfoByID(id);
 
         if (!data) {
             const { statusCode, message } = new createHttpError.BadRequest();
