@@ -1,8 +1,24 @@
 // Type
 type NewsCompactForApp = Pick<INews, 'title' | 'thumbnail'>;
 type NewsCompactForWebDashboard = Pick<INews, 'title'>;
-type NewsCompactForWeb = Pick<INews, 'title' | 'description' | 'thumbnail'>;
+type NewsCompactForWeb = Pick<
+    INews,
+    'title' | 'description' | 'thumbnail' | 'newsID'
+>;
 type NewsInfo = Pick<INews, 'title' | 'description' | 'content'>;
+
+// Interfaces
+interface NewsResultGetShortlistModeFirstForWeb {
+    mode: 'first';
+    top: INewsCompactModeSmallForWeb[] | null;
+    mostViews: INewsCompactModeTitleForWeb[] | null;
+    latests: INewsCompactForWeb[];
+    pages: number;
+}
+interface NewsResultGetShortlistModeMoreForWeb {
+    mode: 'more';
+    latests: INewsCompactForWeb[];
+}
 
 // Export Type
 export type IHotNewsCompactForApp = Omit<INewsCompactForApp, 'createdAt'> &
@@ -15,11 +31,16 @@ export type INewsCompactModeSmallForWeb = Omit<
 >;
 export type INewsCompactModeTitleForWeb = Pick<
     INewsCompactForWeb,
-    'id' | 'title' | 'link'
+    'id' | 'title' | 'link' | 'newsID'
 >;
+export type INewsResultGetShortlistForWeb =
+    | NewsResultGetShortlistModeFirstForWeb
+    | NewsResultGetShortlistModeMoreForWeb;
 
 // Export Interface
 export interface INews {
+    newsID: number;
+
     title: string;
     description: string;
     content: string;
@@ -51,4 +72,12 @@ export interface INewsCompactForWeb extends NewsCompactForWeb {
 }
 export interface INewsInfo extends NewsInfo {
     time: number;
+}
+export interface INewsResultGetForDashboardWeb {
+    hot: IHotNewsCompactForWebDashboard;
+    latests: INewsCompactForWebDashboard[];
+}
+export interface INewsResultGetInfoForWeb {
+    data: INewsInfo;
+    more: INewsCompactForWeb[] | null;
 }

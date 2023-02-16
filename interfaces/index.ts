@@ -40,6 +40,12 @@ interface ResultStatusSuccessData<T> extends ResultStatusSuccessNoData {
 interface ResultStatusImage {
     status: 'ImageFormat' | 'ImageToBig';
 }
+interface PropsServerError {
+    status: 'error';
+}
+interface PropsServerSuccess {
+    status: 'success';
+}
 
 // Export Types
 export type IDeviceType = 'web' | 'app';
@@ -52,6 +58,7 @@ export type ResUploadImageJSON = ResJSON<string> | ResultStatusImage;
 export type NextPageWithLayout<P = unknown, IP = P> = NextPage<P, IP> & {
     getLayout?: (page: ReactElement) => ReactNode;
 };
+export type IPropsSeverSide<T> = PropsServerError | (PropsServerSuccess & T);
 
 // Export Interfaces
 export interface IDataUserToken {

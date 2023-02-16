@@ -4,6 +4,9 @@ export * from './_address';
 // Analytics
 export * from './_analytics';
 
+// Brokers
+export * from './_brokers';
+
 // Devices
 export * from './_device';
 
@@ -40,7 +43,8 @@ export interface IImage extends Image {
     fileName: string;
     userID: number;
 }
-export interface IBroker {
+export interface ITotalsByAreas {
     name: string;
-    phoneNumber: string[];
+    totals: number;
+    id: string;
 }

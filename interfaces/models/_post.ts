@@ -24,8 +24,9 @@ type PostCompactForWebDashboardKey =
     | 'prices'
     | 'direction'
     | 'facades'
-    | 'ways';
-type PostCompactForWebKey = 'title' | 'acreages' | 'prices';
+    | 'ways'
+    | 'type';
+type PostCompactForWebKey = 'title' | 'acreages' | 'prices' | 'type';
 type PostSortKey = 'acreages' | 'prices' | 'createdAt';
 type PostInfoKey =
     | 'userID'
@@ -50,6 +51,7 @@ type PostUpdateForUserKey =
     | 'editor'
     | 'createdAt'
     | 'updatedAt';
+type PostAreaDashboardWeb = 'hn' | 'hcm' | 'bn' | 'bg' | 'hd';
 
 type PostCreateLocation = Omit<IPostLocation, 'coordinate' | 'address'> &
     Partial<Pick<IPostLocation, 'address'>>;
@@ -79,12 +81,16 @@ export type IPostSortValue = 'asc' | 'desc';
 export type IPostSort = Partial<Record<PostSortKey, IPostSortValue>>;
 export type IPostCompactModeEditorForWeb = Omit<
     IPostCompactForWeb,
-    'prices' | 'acreages' | 'time'
+    'prices' | 'acreages' | 'time' | 'link'
 > &
-    Pick<IPost, 'status' | 'type'>;
+    Pick<IPost, 'status' | 'type' | 'postID'>;
 export type IPostCompactModeVerticalForWeb = Pick<
     IPostCompactForWeb,
     'title' | 'thumbnail' | 'prices' | 'acreages' | 'link' | 'address' | 'id'
+>;
+export type IPostTotalsByAreaDashboardWeb = Record<
+    PostAreaDashboardWeb,
+    number
 >;
 
 // Export Interfaces
@@ -181,6 +187,8 @@ export interface IPostInfoForWeb extends PostInfo {
     contact: string;
     phoneNumber: string[];
     avatar: string | null;
+    zalo: string | null;
+    facebook: string | null;
 }
 export interface IPostInfoForApp extends Omit<IPostInfoForWeb, 'avatar'> {
     link: string;
@@ -192,4 +200,17 @@ export interface IPostUpdateForUser extends PostUpdateForUser {
 }
 export interface IMyPostInfo extends MyPostInfo {
     time: number;
+}
+export interface IResultGetShortlistForWeb {
+    posts: IPostCompactForWeb[];
+    totals: number;
+    pages: number;
+}
+export interface IPostResultGetForDashboardWeb {
+    posts: IPostCompactForWebDashboard[];
+    pages: number;
+}
+export interface IPostResultGetForNews {
+    sell: IPostCompactModeVerticalForWeb[] | null;
+    rent: IPostCompactModeVerticalForWeb[] | null;
 }

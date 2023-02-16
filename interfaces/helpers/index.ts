@@ -16,7 +16,7 @@ export type IServerGetAddress = (
     wardID: string,
     address?: string
 ) => Promise<string | null>;
-export type IServerGetPages = (totals: number) => number;
+export type IServerGetPages = (totals: number, item?: number) => number;
 
 // Common
 export type IServerCommonConvertHEIC = (

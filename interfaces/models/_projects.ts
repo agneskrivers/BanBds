@@ -48,7 +48,6 @@ interface ProjectPriceByValue {
 // Export Type
 export type IProjectType = 'apartment' | 'land';
 export type IProjectStatus = 'onSale' | 'openingSoon' | 'handedOver';
-export type IProjectInfoForWeb = Omit<IProjectInfoForApp, 'link'>;
 
 // Export Interface
 export interface IProjectOverview {
@@ -117,14 +116,21 @@ export interface IProjectCompactForWeb extends ProjectCompactForWeb {
     link: string;
     investor: IInvestor | null;
 }
-export interface IProjectInfoForApp extends ProjectInfo {
+export interface IProjectInfo extends ProjectInfo {
     investor: IInvestor | null;
     address: string;
     coordinate: IProjectLocationCoordinate;
     link: string;
+    id: string;
 }
 export interface IResultGetShortlistForApp {
     hot: IProjectCompactForApp | null;
     projects: IProjectCompactForApp[];
     pages: number;
+}
+
+export interface IProjectResultGetShortlistForWeb {
+    projects: IProjectCompactForWeb[];
+    pages: number;
+    totals: number;
 }
