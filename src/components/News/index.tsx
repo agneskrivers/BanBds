@@ -57,13 +57,15 @@ const Index: FunctionComponent<Props> = (props) => (
                 >
                     <Image
                         src={`/images/news/${props.data.thumbnail}`}
-                        alt={props.data.title}
+                        alt={decodeURI(props.data.title)}
                         fill
                     />
                 </div>
             )}
             <header>
-                <p className={Styles.article_title}>{props.data.title}</p>
+                <p className={Styles.article_title}>
+                    {decodeURI(props.data.title)}
+                </p>
                 {props.mode === 'normal' && (
                     <p className={Styles.article_description}>
                         {decodeURI(props.data.description)}
