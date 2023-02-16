@@ -2,7 +2,7 @@
 import React, { FunctionComponent } from 'react';
 import classNames from 'classnames';
 import Link from 'next/link';
-import { Row, Col, Image, Badge } from 'react-bootstrap';
+import { Row, Col, Image, Badge, Spinner } from 'react-bootstrap';
 
 // Styles
 import Styles from './styles/index.module.scss';
@@ -29,6 +29,8 @@ interface PropsModeVertical {
 interface PropsModeEditor {
     mode: 'editor';
     data: IPostCompactModeEditorForWeb;
+    postID?: number;
+    onRemove(postID: number): void;
 }
 
 // Props
@@ -37,6 +39,19 @@ type Props = PropsModeNormal | PropsModeEditor | PropsModeVertical;
 const Index: FunctionComponent<Props> = (props) => {
     // Props
     const { mode, data } = props;
+
+    // Handles
+    const handleClickRemove = (postID: number) => {
+        if (mode === 'editor') {
+            const isRemove = confirm(
+                'Bạn có chắc chắn khi xóa tin đăng này không?'
+            );
+
+            if (isRemove) {
+                props.onRemove(postID);
+            }
+        }
+    };
 
     if (mode === 'editor') {
         return (
@@ -101,14 +116,29 @@ const Index: FunctionComponent<Props> = (props) => {
                             <div className={Styles.product_btn}>
                                 {data.status !== 'sold' && (
                                     <Link
-                                        href={`/quan-ly-tin-dang/${data.id}`}
+                                        href={
+                                            props.postID !== undefined
+                                                ? '#'
+                                                : `/quan-ly-tin-dang/${data.postID}`
+                                        }
                                         className={Styles.product_btn_edit}
                                     >
                                         Chỉnh sửa
                                     </Link>
                                 )}
-                                <button className={Styles.product_btn_remove}>
-                                    Xóa
+                                <button
+                                    className={Styles.product_btn_remove}
+                                    onClick={() =>
+                                        handleClickRemove(data.postID)
+                                    }
+                                    disabled={props.postID !== undefined}
+                                >
+                                    {props.postID !== undefined &&
+                                    props.postID === props.data.postID ? (
+                                        <Spinner size='sm' />
+                                    ) : (
+                                        'Xóa'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -162,17 +192,21 @@ const Index: FunctionComponent<Props> = (props) => {
                                         data.prices >= 1000
                                             ? data.prices / 1000
                                             : data.prices
-                                    } ${
-                                        data.prices >= 1000 ? 'tỷ' : 'triệu'
+                                    } ${data.prices >= 1000 ? 'tỷ' : 'triệu'}${
+                                        mode === 'normal' &&
+                                        data.type === 'rent'
+                                            ? '/tháng'
+                                            : ''
                                     }`}</p>
-                                    {mode === 'normal' && (
-                                        <p>
-                                            {formatPricePerSquareMeter(
-                                                data.acreages,
-                                                data.prices
-                                            )}
-                                        </p>
-                                    )}
+                                    {mode === 'normal' &&
+                                        props.data.type === 'sell' && (
+                                            <p>
+                                                {formatPricePerSquareMeter(
+                                                    data.acreages,
+                                                    data.prices
+                                                )}
+                                            </p>
+                                        )}
                                 </div>
                             </div>
                             {mode === 'normal' && (
