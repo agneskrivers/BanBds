@@ -11,6 +11,7 @@ export const investor: string;
 export const investor_content: string;
 export const location: string;
 export const box: string;
+export const divider: string;
 
 export const item: string;
 export const item_img: string;

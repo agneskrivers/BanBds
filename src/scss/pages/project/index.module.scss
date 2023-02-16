@@ -29,6 +29,11 @@ h2.title {
         height: 400px;
         border-radius: 5px;
         overflow: hidden;
+        background-color: var(--bs-gray-400);
+
+        & img {
+            object-fit: contain;
+        }
     }
 }
 
@@ -38,10 +43,11 @@ h2.title {
     background-color: #e7fff4;
     color: #07a35d;
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 30px;
     font-size: 16px;
     z-index: 9;
+    border-radius: 5px;
 }
 
 .overview {
@@ -50,12 +56,12 @@ h2.title {
     &_title {
         font-size: 17px;
         font-weight: 500;
-        margin-bottom: 20px;
+        margin: 10px 0;
     }
 
     &_label {
         font-size: 16px;
-        margin-bottom: 20px;
+        margin: 10px 0;
         display: inline-block;
         font-weight: 400;
     }
@@ -205,5 +211,17 @@ h2.title {
                 }
             }
         }
+    }
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--bs-gray-400);
+    margin: 0 auto;
+}
+
+@media only screen and (max-width: 48em) {
+    .divider {
+        width: 95%;
     }
 }

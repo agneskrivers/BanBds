@@ -32,7 +32,13 @@
         line-height: 20px;
         font-weight: 400;
         color: #777777;
-        cursor: pointer;
+        background: transparent;
+        border: none;
+        text-align: left;
+
+        &:hover {
+            color: var(--bs-gray-800);
+        }
     }
 
     &_content {

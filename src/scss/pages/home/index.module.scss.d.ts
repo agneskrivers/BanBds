@@ -5,6 +5,7 @@ export const search: string;
 export const search_btn: string;
 export const search_btn_active: string;
 export const search_content: string;
+export const search_content_border: string;
 export const search_content_input: string;
 export const search_border: string;
 

@@ -11,6 +11,10 @@ body {
     }
 }
 
+img {
+    object-fit: cover;
+}
+
 a,
 a:hover {
     color: inherit;

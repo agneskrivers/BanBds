@@ -119,9 +119,10 @@
 
     &_content {
         line-height: 20px;
-        font-size: 17px;
-        font-weight: 300;
+        font-size: 16px;
+        font-weight: 400;
         margin-top: 10px;
+        white-space: pre-wrap;
 
         & > div {
             & p {
