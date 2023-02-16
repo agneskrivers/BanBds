@@ -142,3 +142,4 @@ public/images/projects
 public/images/news
 data/
 demo/
+*/*/.DS_Store
