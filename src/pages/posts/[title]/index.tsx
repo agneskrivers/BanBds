@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
 import Image from 'next/image';
@@ -10,6 +10,9 @@ import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import Carousel from 'react-bootstrap/Carousel';
 import Container from 'react-bootstrap/Container';
+import ErrorComponent from 'next/error';
+import Head from 'next/head';
+import { GetServerSideProps } from 'next';
 
 // Styles
 import Styles from '@client/scss/pages/post/index.module.scss';
@@ -23,37 +26,99 @@ import { formatPricePerSquareMeter, getName } from '@client/helpers';
 // Layouts
 import { WebLayout } from '@client/layouts';
 
+// Services
+import services from '@client/services';
+
 // Interfaces
-import type { NextPageWithLayout } from '@interfaces';
+import type {
+    NextPageWithLayout,
+    IPropsSeverSide,
+    IPostInfoForWeb,
+} from '@interfaces';
 
-// Demo
-import { demoPostInfo } from '../../../../demo/index';
+// Props
+type Props = IPropsSeverSide<IPostInfoForWeb>;
 
-const Index: NextPageWithLayout = () => {
+const Index: NextPageWithLayout<Props> = (props) => {
     // States
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+    const [isHeader, setIsHeader] = useState<boolean>(false);
+    const [isImages, setIsImages] = useState<boolean>(true);
+    const [isInfo, setIsInfo] = useState<boolean>(false);
+
+    const [isModalImages, setIsModalImages] = useState<boolean>(false);
+    const [isModalMap, setIsModalMap] = useState<boolean>(false);
+
+    // Ref
+    const divImageRef = useRef<HTMLDivElement | null>(null);
 
     // Effects
     useEffect(() => {
         setIsLoaded(true);
     }, []);
+    useEffect(() => {
+        const handleScroll = () => {
+            const offsetY = window.scrollY;
+
+            if (offsetY <= 72) {
+                setIsHeader(false);
+            } else {
+                setIsHeader(true);
+            }
+
+            if (divImageRef && divImageRef.current) {
+                const offset =
+                    divImageRef.current.offsetHeight +
+                    divImageRef.current.offsetTop;
+
+                if (offsetY >= offset) {
+                    setIsInfo(true);
+                    setIsImages(false);
+                } else {
+                    setIsImages(true);
+                    setIsInfo(false);
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Handles
+    const handleOpenModalImages = () => setIsModalImages(true);
+    const handleCloseModalImages = () => setIsModalImages(false);
+
+    const handleOpenModalMap = () => setIsModalMap(true);
+    const handleCloseModalMap = () => setIsModalMap(false);
+
+    if (props.status === 'error') return <ErrorComponent statusCode={500} />;
 
     return (
         <>
+            <Head>
+                <title>{`${props.title} - BanBds`}</title>
+            </Head>
             <main>
                 <Container>
-                    <div className={Styles.header}>
+                    <div
+                        className={classNames(Styles.header, {
+                            [Styles.header_active]: isHeader,
+                        })}
+                    >
                         <Col lg={4}>
                             <button
                                 className={classNames(Styles.header_tab, {
-                                    [Styles.header_tab_active]: true,
+                                    [Styles.header_tab_active]: isImages,
                                 })}
                             >
                                 Ảnh
                             </button>
                             <button
                                 className={classNames(Styles.header_tab, {
-                                    [Styles.header_tab_active]: false,
+                                    [Styles.header_tab_active]: isInfo,
                                 })}
                             >
                                 Thông tin bất động sản
@@ -62,15 +127,15 @@ const Index: NextPageWithLayout = () => {
                         <Col lg={8}>
                             <p className={Styles.header_info}>
                                 {`${
-                                    demoPostInfo.prices >= 1000
-                                        ? demoPostInfo.prices / 1000
-                                        : demoPostInfo.prices
-                                } ${
-                                    demoPostInfo.prices >= 1000 ? 'tỷ' : 'triệu'
-                                } | ${demoPostInfo.acreages} m²`}
+                                    props.prices >= 1000
+                                        ? props.prices / 1000
+                                        : props.prices
+                                } ${props.prices >= 1000 ? 'tỷ' : 'triệu'} | ${
+                                    props.acreages
+                                } m²`}
                             </p>
                             <p className={Styles.header_address}>
-                                {demoPostInfo.address}
+                                {props.address}
                             </p>
                         </Col>
                     </div>
@@ -80,18 +145,20 @@ const Index: NextPageWithLayout = () => {
                             'd-md-flex',
                             Styles.img
                         )}
+                        ref={divImageRef}
+                        onClick={handleOpenModalImages}
                     >
                         <Row className='w-100'>
-                            <Col md={demoPostInfo.images.length >= 3 ? 8 : 12}>
+                            <Col md={props.images.length >= 3 ? 8 : 12}>
                                 <div className={Styles.img_item}>
                                     <Image
-                                        src={`/images/posts/${demoPostInfo.images[0]}`}
+                                        src={`/images/posts/${props.images[0]}`}
                                         fill
-                                        alt={`Image ${demoPostInfo.title}`}
+                                        alt={`Image ${props.title}`}
                                     />
                                 </div>
                             </Col>
-                            {demoPostInfo.images.length >= 3 && (
+                            {props.images.length >= 3 && (
                                 <Col md={4}>
                                     <div
                                         className={classNames(
@@ -102,37 +169,37 @@ const Index: NextPageWithLayout = () => {
                                     >
                                         <div className={Styles.img_item}>
                                             <Image
-                                                src={`/images/posts/${demoPostInfo.images[1]}`}
+                                                src={`/images/posts/${props.images[1]}`}
                                                 fill
-                                                alt={`Image ${demoPostInfo.title}`}
+                                                alt={`Image ${props.title}`}
                                             />
                                         </div>
                                         <div className={Styles.img_item}>
                                             <Image
-                                                src={`/images/posts/${demoPostInfo.images[2]}`}
+                                                src={`/images/posts/${props.images[2]}`}
                                                 fill
-                                                alt={`Image ${demoPostInfo.title}`}
+                                                alt={`Image ${props.title}`}
                                             />
                                         </div>
                                     </div>
                                 </Col>
                             )}
                         </Row>
-                        {demoPostInfo.images.length > 3 && (
+                        {props.images.length > 3 && (
                             <div className={Styles.img_btn}>
-                                <button>{`Xem tất cả ảnh (${demoPostInfo.images.length})`}</button>
+                                <button>{`Xem tất cả ảnh (${props.images.length})`}</button>
                             </div>
                         )}
                     </div>
                     <Carousel className='d-md-none' indicators={false}>
-                        {demoPostInfo.images.map((image, index) => (
+                        {props.images.map((image, index) => (
                             <Carousel.Item
                                 className={Styles.img_carousel}
                                 key={image.split('.')[0]}
                             >
                                 <Image
                                     src={`/images/posts/${image}`}
-                                    alt={`Image ${demoPostInfo.title} ${index}`}
+                                    alt={`Image ${props.title} ${index}`}
                                     fill
                                 />
                             </Carousel.Item>
@@ -148,7 +215,7 @@ const Index: NextPageWithLayout = () => {
                                         Styles.title
                                     )}
                                 >
-                                    {demoPostInfo.title}
+                                    {props.title}
                                 </h1>
                                 <div
                                     className={classNames(
@@ -159,35 +226,47 @@ const Index: NextPageWithLayout = () => {
                                     <OverlayTrigger
                                         overlay={<Tooltip>Xem bản đồ</Tooltip>}
                                     >
-                                        <p>{demoPostInfo.address}</p>
+                                        <p onClick={handleOpenModalMap}>
+                                            {props.address}
+                                        </p>
                                     </OverlayTrigger>
-                                    <p>{`Ngày đăng: ${dayjs(
-                                        demoPostInfo.time
-                                    ).format('DD/MM/YYYY')}`}</p>
+                                    <p>{`Ngày đăng: ${dayjs(props.time).format(
+                                        'DD/MM/YYYY'
+                                    )}`}</p>
                                 </div>
                                 <div className={Styles.infoCompact}>
                                     <Row>
                                         <Col xs={6}>
-                                            <p>Giá bán</p>
+                                            <p>
+                                                {props.type === 'sell'
+                                                    ? 'Giá bán'
+                                                    : 'Mức giá'}
+                                            </p>
                                             <p>{`${
-                                                demoPostInfo.prices >= 1000
-                                                    ? demoPostInfo.prices / 1000
-                                                    : demoPostInfo.prices
+                                                props.prices >= 1000
+                                                    ? props.prices / 1000
+                                                    : props.prices
                                             } ${
-                                                demoPostInfo.prices >= 1000
+                                                props.prices >= 1000
                                                     ? 'tỷ'
                                                     : 'triệu'
+                                            }${
+                                                props.type === 'rent'
+                                                    ? '/tháng'
+                                                    : ''
                                             }`}</p>
-                                            <span>
-                                                {formatPricePerSquareMeter(
-                                                    demoPostInfo.acreages,
-                                                    demoPostInfo.prices
-                                                )}
-                                            </span>
+                                            {props.type === 'sell' && (
+                                                <span>
+                                                    {formatPricePerSquareMeter(
+                                                        props.acreages,
+                                                        props.prices
+                                                    )}
+                                                </span>
+                                            )}
                                         </Col>
                                         <Col xs={6}>
                                             <p>Diện tích</p>
-                                            <p>{`${demoPostInfo.acreages} m²`}</p>
+                                            <p>{`${props.acreages} m²`}</p>
                                         </Col>
                                     </Row>
                                 </div>
@@ -196,7 +275,7 @@ const Index: NextPageWithLayout = () => {
                                         Thông tin mô tả
                                     </h3>
                                     <p className={Styles.info_content}>
-                                        {decodeURI(demoPostInfo.content)}
+                                        {decodeURI(props.content)}
                                     </p>
                                 </div>
                                 <div className={Styles.info}>
@@ -211,12 +290,12 @@ const Index: NextPageWithLayout = () => {
                                             <Col xs={6}>
                                                 <p>
                                                     {getName.post.category(
-                                                        demoPostInfo.category
+                                                        props.category
                                                     )}
                                                 </p>
                                             </Col>
                                         </Row>
-                                        {demoPostInfo.direction && (
+                                        {props.direction && (
                                             <Row>
                                                 <Col xs={6}>
                                                     <span>Hướng nhà</span>
@@ -224,33 +303,33 @@ const Index: NextPageWithLayout = () => {
                                                 <Col xs={6}>
                                                     <p>
                                                         {getName.post.direction(
-                                                            demoPostInfo.direction
+                                                            props.direction
                                                         )}
                                                     </p>
                                                 </Col>
                                             </Row>
                                         )}
-                                        {demoPostInfo.facades && (
+                                        {props.facades && (
                                             <Row>
                                                 <Col xs={6}>
                                                     <span>Mặt tiền</span>
                                                 </Col>
                                                 <Col xs={6}>
-                                                    <p>{`${demoPostInfo.facades}m`}</p>
+                                                    <p>{`${props.facades}m`}</p>
                                                 </Col>
                                             </Row>
                                         )}
-                                        {demoPostInfo.ways && (
+                                        {props.ways && (
                                             <Row>
                                                 <Col xs={6}>
                                                     <span>Đường vào</span>
                                                 </Col>
                                                 <Col xs={6}>
-                                                    <p>{`${demoPostInfo.ways}m`}</p>
+                                                    <p>{`${props.ways}m`}</p>
                                                 </Col>
                                             </Row>
                                         )}
-                                        {demoPostInfo.legal && (
+                                        {props.legal && (
                                             <Row>
                                                 <Col xs={6}>
                                                     <span>Giấy tờ pháp lý</span>
@@ -258,7 +337,7 @@ const Index: NextPageWithLayout = () => {
                                                 <Col xs={6}>
                                                     <p>
                                                         {getName.post.legal(
-                                                            demoPostInfo.legal
+                                                            props.legal
                                                         )}
                                                     </p>
                                                 </Col>
@@ -276,7 +355,7 @@ const Index: NextPageWithLayout = () => {
                                                 <span>Mã tin đăng</span>
                                             </Col>
                                             <Col xs={6}>
-                                                <p>{demoPostInfo.postID}</p>
+                                                <p>{props.postID}</p>
                                             </Col>
                                         </Row>
                                         <Row>
@@ -285,7 +364,7 @@ const Index: NextPageWithLayout = () => {
                                             </Col>
                                             <Col xs={6}>
                                                 <p>
-                                                    {demoPostInfo.views.toLocaleString()}
+                                                    {props.views.toLocaleString()}
                                                 </p>
                                             </Col>
                                         </Row>
@@ -302,17 +381,17 @@ const Index: NextPageWithLayout = () => {
                                     <div className='d-flex align-items-center'>
                                         <Image
                                             src={
-                                                demoPostInfo.avatar
-                                                    ? `/images/avatars/${demoPostInfo.avatar}`
+                                                props.avatar
+                                                    ? `/images/avatars/${props.avatar}`
                                                     : '/images/common/avatar.png'
                                             }
                                             width={80}
                                             height={80}
-                                            alt={demoPostInfo.contact}
+                                            alt={props.contact}
                                             className={Styles.author_img}
                                         />
                                         <h4 className={Styles.author_name}>
-                                            {demoPostInfo.contact}
+                                            {props.contact}
                                         </h4>
                                     </div>
                                     <hr />
@@ -330,7 +409,12 @@ const Index: NextPageWithLayout = () => {
             </main>
             {isLoaded && (
                 <>
-                    <Modal show={false} size='lg' centered>
+                    <Modal
+                        show={isModalMap}
+                        onHide={handleCloseModalMap}
+                        size='lg'
+                        centered
+                    >
                         <Modal.Header closeButton>Vị trí</Modal.Header>
                         <Modal.Body>
                             <div
@@ -338,17 +422,21 @@ const Index: NextPageWithLayout = () => {
                                 style={{ height: '80vh' }}
                             >
                                 <MapComponent
-                                    lat={demoPostInfo.coordinate.latitude}
-                                    lng={demoPostInfo.coordinate.longitude}
+                                    lat={props.coordinate.latitude}
+                                    lng={props.coordinate.longitude}
                                 />
                             </div>
                         </Modal.Body>
                     </Modal>
-                    <Modal show={false} size='lg' centered>
-                        <Modal.Header closeButton>Ảnh</Modal.Header>
+                    <Modal
+                        show={isModalImages}
+                        onHide={handleCloseModalImages}
+                        size='lg'
+                        centered
+                    >
                         <Modal.Body>
                             <Carousel indicators={false}>
-                                {demoPostInfo.images.map((image, index) => (
+                                {props.images.map((image, index) => (
                                     <Carousel.Item
                                         className={Styles.img_carousel}
                                         key={image.split('.')[0]}
@@ -356,7 +444,7 @@ const Index: NextPageWithLayout = () => {
                                     >
                                         <Image
                                             src={`/images/posts/${image}`}
-                                            alt={`Image ${demoPostInfo.title} ${index}`}
+                                            alt={`Image ${props.title} ${index}`}
                                             fill
                                         />
                                     </Carousel.Item>
@@ -371,5 +459,44 @@ const Index: NextPageWithLayout = () => {
 };
 
 Index.getLayout = (page) => <WebLayout>{page}</WebLayout>;
+
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+    const { title } = ctx.query;
+
+    if (!title || typeof title !== 'string')
+        return {
+            notFound: true,
+        };
+
+    const id = title.split('-').splice(-1, 1)[0];
+
+    if (isNaN(parseInt(id)))
+        return {
+            notFound: true,
+        };
+
+    const postID = parseInt(id);
+
+    const result = await services.posts.info(postID);
+
+    if (!result)
+        return {
+            props: {
+                status: 'error',
+            },
+        };
+
+    if (result === 'NotFound')
+        return {
+            notFound: true,
+        };
+
+    return {
+        props: {
+            status: 'success',
+            ...result,
+        },
+    };
+};
 
 export default Index;

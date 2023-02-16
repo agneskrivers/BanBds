@@ -7,6 +7,9 @@ import Carousel from 'react-bootstrap/Carousel';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Modal from 'react-bootstrap/Modal';
 import Image from 'next/image';
+import ErrorComponent from 'next/error';
+import Head from 'next/head';
+import { GetServerSideProps } from 'next';
 
 // Styles
 import Styles from '@client/scss/pages/project/index.module.scss';
@@ -24,59 +27,78 @@ import { getName } from '@client/helpers';
 // Layouts
 import { WebLayout } from '@client/layouts';
 
+// Services
+import services from '@client/services';
+
 // Interfaces
-import type { NextPageWithLayout } from '@interfaces';
+import type {
+    NextPageWithLayout,
+    IApiWebProjectInfo,
+    IPropsSeverSide,
+} from '@interfaces';
 
-// Demo
-import { demoProjectInfo, demoPostCompactModeVertical } from '../../../../demo';
+// Props
+type Props = IPropsSeverSide<IApiWebProjectInfo>;
 
-const Index: NextPageWithLayout = () => {
+const Index: NextPageWithLayout<Props> = (props) => {
     // States
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
+    const [isModalMap, setIsModalMap] = useState<boolean>(false);
 
     // Effects
     useEffect(() => {
         setIsLoaded(true);
     }, []);
 
+    // Handles
+    const handleOpenModalMap = () => setIsModalMap(true);
+    const handleCloseModalMap = () => setIsModalMap(false);
+
+    if (props.status === 'error') return <ErrorComponent statusCode={500} />;
+
+    const { data, posts } = props;
+
     return (
         <>
+            <Head>
+                <title>{`Dự án ${decodeURI(data.title)} - BanBds`}</title>
+            </Head>
             <main>
                 <Container>
                     <Row className='justify-content-evenly'>
-                        <Col md={8}>
+                        <Col md={posts ? 8 : 10}>
                             <h1 className={Styles.title}>
-                                {decodeURI(demoProjectInfo.title)}
+                                {decodeURI(data.title)}
                             </h1>
                             <OverlayTrigger
                                 placement='top'
                                 overlay={<Tooltip>Xem bản đồ</Tooltip>}
                             >
-                                <p className={Styles.address}>
-                                    {demoProjectInfo.address}
+                                <p
+                                    className={Styles.address}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={handleOpenModalMap}
+                                >
+                                    {data.address}
                                 </p>
                             </OverlayTrigger>
                             <div className={Styles.images}>
                                 <Carousel interval={5000}>
-                                    {demoProjectInfo.images.map((item) => (
+                                    {data.images.map((item) => (
                                         <Carousel.Item
                                             className={Styles.images_item}
                                             key={item}
                                         >
                                             <Image
                                                 src={`/images/projects/${item}`}
-                                                alt={decodeURI(
-                                                    demoProjectInfo.title
-                                                )}
+                                                alt={decodeURI(data.title)}
                                                 fill
                                             />
                                         </Carousel.Item>
                                     ))}
                                 </Carousel>
                                 <span className={Styles.status}>
-                                    {getName.project.status(
-                                        demoProjectInfo.status
-                                    )}
+                                    {getName.project.status(data.status)}
                                 </span>
                             </div>
                             <div className={Styles.overview}>
@@ -84,7 +106,7 @@ const Index: NextPageWithLayout = () => {
                                 <Row className='flex-wrap my-4'>
                                     <Col lg={6}>
                                         <Row>
-                                            <Col lg={6}>
+                                            <Col xs={6}>
                                                 <p
                                                     className={
                                                         Styles.overview_title
@@ -93,78 +115,82 @@ const Index: NextPageWithLayout = () => {
                                                     Diện tích
                                                 </p>
                                             </Col>
-                                            <Col lg={6}>
+                                            <Col xs={6}>
                                                 <span
                                                     className={
                                                         Styles.overview_label
                                                     }
                                                 >
-                                                    {demoProjectInfo.acreages}
+                                                    {data.acreages}
                                                 </span>
                                             </Col>
                                         </Row>
                                     </Col>
-                                    {demoProjectInfo.prices && (
-                                        <Col lg={6}>
-                                            <Row>
-                                                <Col lg={6}>
-                                                    <p
-                                                        className={
-                                                            Styles.overview_title
-                                                        }
-                                                    >
-                                                        Giá
-                                                    </p>
-                                                </Col>
-                                                <Col lg={6}>
-                                                    <span
-                                                        className={
-                                                            Styles.overview_label
-                                                        }
-                                                    >
-                                                        {`${
-                                                            typeof demoProjectInfo.prices ===
-                                                            'number'
-                                                                ? demoProjectInfo.prices
-                                                                : `${demoProjectInfo.prices.min} - ${demoProjectInfo.prices.max}`
-                                                        } triệu/m²`}
-                                                    </span>
-                                                </Col>
-                                            </Row>
-                                        </Col>
-                                    )}
-                                    {demoProjectInfo.investor && (
-                                        <Col lg={6}>
-                                            <Row>
-                                                <Col lg={6}>
-                                                    <p
-                                                        className={
-                                                            Styles.overview_title
-                                                        }
-                                                    >
-                                                        Chủ đầu tư
-                                                    </p>
-                                                </Col>
-                                                <Col lg={6}>
-                                                    <span
-                                                        className={
-                                                            Styles.overview_label
-                                                        }
-                                                    >
-                                                        {
-                                                            demoProjectInfo
-                                                                .investor.name
-                                                        }
-                                                    </span>
-                                                </Col>
-                                            </Row>
-                                        </Col>
-                                    )}
-                                    {demoProjectInfo.overview && (
+                                    {data.prices && (
                                         <>
+                                            <div className={Styles.divider} />
                                             <Col lg={6}>
                                                 <Row>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
+                                                        <p
+                                                            className={
+                                                                Styles.overview_title
+                                                            }
+                                                        >
+                                                            Giá
+                                                        </p>
+                                                    </Col>
+                                                    <Col xs={6}>
+                                                        <span
+                                                            className={
+                                                                Styles.overview_label
+                                                            }
+                                                        >
+                                                            {`${
+                                                                typeof data.prices ===
+                                                                'number'
+                                                                    ? data.prices
+                                                                    : `${data.prices.min} - ${data.prices.max}`
+                                                            } triệu/m²`}
+                                                        </span>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </>
+                                    )}
+                                    {data.investor && (
+                                        <>
+                                            <div className={Styles.divider} />
+                                            <Col lg={6}>
+                                                <Row>
+                                                    <Col xs={6}>
+                                                        <p
+                                                            className={
+                                                                Styles.overview_title
+                                                            }
+                                                        >
+                                                            Chủ đầu tư
+                                                        </p>
+                                                    </Col>
+                                                    <Col xs={6}>
+                                                        <span
+                                                            className={
+                                                                Styles.overview_label
+                                                            }
+                                                        >
+                                                            {data.investor.name}
+                                                        </span>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </>
+                                    )}
+                                    {data.overview && (
+                                        <>
+                                            <div className={Styles.divider} />
+                                            <Col lg={6}>
+                                                <Row>
+                                                    <Col xs={6}>
                                                         <p
                                                             className={
                                                                 Styles.overview_title
@@ -173,20 +199,21 @@ const Index: NextPageWithLayout = () => {
                                                             Số căn hộ
                                                         </p>
                                                     </Col>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
                                                         <span
                                                             className={
                                                                 Styles.overview_label
                                                             }
                                                         >
-                                                            {`${demoProjectInfo.overview.numberOfApartments} căn`}
+                                                            {`${data.overview.numberOfApartments} căn`}
                                                         </span>
                                                     </Col>
                                                 </Row>
                                             </Col>
+                                            <div className={Styles.divider} />
                                             <Col lg={6}>
                                                 <Row>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
                                                         <p
                                                             className={
                                                                 Styles.overview_title
@@ -195,20 +222,21 @@ const Index: NextPageWithLayout = () => {
                                                             Số tòa
                                                         </p>
                                                     </Col>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
                                                         <span
                                                             className={
                                                                 Styles.overview_label
                                                             }
                                                         >
-                                                            {`${demoProjectInfo.overview.numberOfApartments} tòa`}
+                                                            {`${data.overview.numberOfApartments} tòa`}
                                                         </span>
                                                     </Col>
                                                 </Row>
                                             </Col>
+                                            <div className={Styles.divider} />
                                             <Col lg={6}>
                                                 <Row>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
                                                         <p
                                                             className={
                                                                 Styles.overview_title
@@ -217,15 +245,14 @@ const Index: NextPageWithLayout = () => {
                                                             Pháp lý
                                                         </p>
                                                     </Col>
-                                                    <Col lg={6}>
+                                                    <Col xs={6}>
                                                         <span
                                                             className={
                                                                 Styles.overview_label
                                                             }
                                                         >
                                                             {
-                                                                demoProjectInfo
-                                                                    .overview
+                                                                data.overview
                                                                     .legal
                                                             }
                                                         </span>
@@ -239,26 +266,33 @@ const Index: NextPageWithLayout = () => {
                             <div
                                 className={Styles.content}
                                 dangerouslySetInnerHTML={{
-                                    __html: decodeURI(demoProjectInfo.content),
+                                    __html: decodeURI(data.content),
                                 }}
                             />
                         </Col>
-                        <Col md={3}>
-                            <WidgetComponent title='Bất động sản liên quan'>
-                                {demoPostCompactModeVertical.map((item) => (
-                                    <PostComponent
-                                        key={item.id}
-                                        mode='vertical'
-                                        data={item}
-                                    />
-                                ))}
-                            </WidgetComponent>
-                        </Col>
+                        {posts && (
+                            <Col md={3}>
+                                <WidgetComponent title='Bất động sản liên quan'>
+                                    {posts.map((item) => (
+                                        <PostComponent
+                                            key={item.id}
+                                            mode='vertical'
+                                            data={item}
+                                        />
+                                    ))}
+                                </WidgetComponent>
+                            </Col>
+                        )}
                     </Row>
                 </Container>
             </main>
             {isLoaded && (
-                <Modal show={false} size='lg' centered>
+                <Modal
+                    show={isModalMap}
+                    onHide={handleCloseModalMap}
+                    size='lg'
+                    centered
+                >
                     <Modal.Header closeButton>Vị trí</Modal.Header>
                     <Modal.Body>
                         <div
@@ -266,8 +300,8 @@ const Index: NextPageWithLayout = () => {
                             style={{ height: '80vh' }}
                         >
                             <MapComponent
-                                lat={demoProjectInfo.coordinate.latitude}
-                                lng={demoProjectInfo.coordinate.longitude}
+                                lat={data.coordinate.latitude}
+                                lng={data.coordinate.longitude}
                             />
                         </div>
                     </Modal.Body>
@@ -278,5 +312,44 @@ const Index: NextPageWithLayout = () => {
 };
 
 Index.getLayout = (page) => <WebLayout>{page}</WebLayout>;
+
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+    const { title } = ctx.query;
+
+    if (!title || typeof title !== 'string')
+        return {
+            notFound: true,
+        };
+
+    const id = title.split('-').splice(-1, 1)[0];
+
+    if (isNaN(parseInt(id)))
+        return {
+            notFound: true,
+        };
+
+    const projectID = parseInt(id);
+
+    const result = await services.projects.info(projectID);
+
+    if (!result)
+        return {
+            props: {
+                status: 'error',
+            },
+        };
+
+    if (result === 'NotFound')
+        return {
+            notFound: true,
+        };
+
+    return {
+        props: {
+            status: 'success',
+            ...result,
+        },
+    };
+};
 
 export default Index;
