@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import { connect, connection } from 'mongoose';
 
 // Setup
@@ -22,7 +23,12 @@ import address from './address';
 import apis from '@server/apis';
 
 // Configs
-import { MongoURI, SecretCookie, SecretSession } from '@server/configs';
+import {
+    MongoURI,
+    SecretCookie,
+    SecretSession,
+    MongoStoreURI,
+} from '@server/configs';
 
 // Controllers
 import controllers from '@server/controllers';
@@ -33,6 +39,7 @@ declare module 'express-session' {
         posts: number[];
         projects: number[];
         news: string[];
+        views: number;
     }
 }
 
@@ -54,7 +61,6 @@ address()
                 const server = express();
 
                 // Server Use
-                server.set('trust proxy', 1);
                 server.use(cors());
                 server.use(json());
                 server.use(urlencoded({ extended: true }));
@@ -62,9 +68,13 @@ address()
                 server.use(
                     session({
                         secret: SecretSession,
-                        cookie: { secure: true, maxAge: 43200000 },
-                        resave: true,
-                        saveUninitialized: true,
+                        cookie: {
+                            maxAge: 21600000,
+                            secure: process.env.NODE_ENV === 'production',
+                        },
+                        resave: false,
+                        saveUninitialized: false,
+                        store: new MongoStore({ mongoUrl: MongoStoreURI }),
                     })
                 );
                 server.use(helmet({ contentSecurityPolicy: false }));
@@ -81,6 +91,18 @@ address()
                 server.get('/img/news/:image', controllers.news);
                 server.get('/img/projects/:image', controllers.projects);
                 server.get('/temp/:image', controllers.temp);
+
+                server.get('/test', function (req, res) {
+                    if (req.session.views) {
+                        req.session.views++;
+                        res.setHeader('Content-Type', 'text/html');
+                        res.write('<p>views: ' + req.session.views + '</p>');
+                        res.end();
+                    } else {
+                        req.session.views = 1;
+                        res.end('welcome to the session demo. refresh!');
+                    }
+                });
 
                 server.all('*', (req, res) => appHandler(req, res));
 
