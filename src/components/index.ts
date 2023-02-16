@@ -8,4 +8,5 @@ export { default as NewsComponent } from './News';
 export { default as PostComponent } from './Post';
 export { default as ProjectComponent } from './Project';
 export { default as SearchComponent } from './Search';
+export { default as SplashComponent } from './Splash';
 export { default as WidgetComponent } from './Widget';
