@@ -23,6 +23,7 @@
             color: #ccc;
             background-color: white;
             cursor: pointer;
+            transition: all 0.2s ease-in-out;
 
             &:hover {
                 color: #2c2c2c;
