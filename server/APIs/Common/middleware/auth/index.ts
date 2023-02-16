@@ -20,11 +20,12 @@ type ApiCommonMiddlewareAuth = (
 const Index: ApiCommonMiddlewareAuth = async (req, res, next) => {
     const user = req.headers['authorization'];
     const device = req.headers['x-banbds-device-token'];
+    const session = req.sessionID;
 
     try {
         const { statusCode, message } = new createHttpError.Unauthorized();
 
-        if (!user && !device) {
+        if (!user && !device && !session) {
             res.status(statusCode).json({ status: 'Unauthorized', message });
 
             return;
@@ -69,7 +70,7 @@ const Index: ApiCommonMiddlewareAuth = async (req, res, next) => {
             return next();
         }
 
-        res.status(statusCode).json({ status: 'Unauthorized', message });
+        next();
     } catch (error) {
         const { message } = error as Error;
 
