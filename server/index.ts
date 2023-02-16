@@ -11,6 +11,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import path from 'path';
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
 import { connect, connection } from 'mongoose';
 
 // Setup
@@ -20,10 +22,19 @@ import address from './address';
 import apis from '@server/apis';
 
 // Configs
-import { MongoURI } from '@server/configs';
+import { MongoURI, SecretCookie, SecretSession } from '@server/configs';
 
 // Controllers
 import controllers from '@server/controllers';
+
+// Declare
+declare module 'express-session' {
+    interface SessionData {
+        posts: number[];
+        projects: number[];
+        news: string[];
+    }
+}
 
 // MongoDB
 connect(MongoURI);
@@ -43,9 +54,19 @@ address()
                 const server = express();
 
                 // Server Use
+                server.set('trust proxy', 1);
                 server.use(cors());
                 server.use(json());
                 server.use(urlencoded({ extended: true }));
+                server.use(cookieParser(SecretCookie));
+                server.use(
+                    session({
+                        secret: SecretSession,
+                        cookie: { secure: true, maxAge: 43200000 },
+                        resave: true,
+                        saveUninitialized: true,
+                    })
+                );
                 server.use(helmet({ contentSecurityPolicy: false }));
 
                 if (dev) {
@@ -57,6 +78,8 @@ address()
                 server.use(express.static(path.join(process.cwd(), 'public')));
 
                 // Get
+                server.get('/img/news/:image', controllers.news);
+                server.get('/img/projects/:image', controllers.projects);
                 server.get('/temp/:image', controllers.temp);
 
                 server.all('*', (req, res) => appHandler(req, res));
