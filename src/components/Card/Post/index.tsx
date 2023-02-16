@@ -30,17 +30,25 @@ const Index: FunctionComponent<Props> = (props) => (
                     alt={props.title}
                     fill
                 />
-                <div className={Styles.price}>
-                    {props.prices >= 1000 ? props.prices / 1000 : props.prices}{' '}
-                    <span>{props.prices >= 1000 ? 'Tỷ' : 'Triệu'}</span>
-                </div>
+                {props.type === 'sell' && (
+                    <div className={Styles.price}>
+                        {props.prices >= 1000
+                            ? props.prices / 1000
+                            : props.prices}{' '}
+                        <span>{props.prices >= 1000 ? 'Tỷ' : 'Triệu'}</span>
+                    </div>
+                )}
                 <div className={Styles.unit}>
-                    <span className={Styles.unit_title}>Đơn giá</span>
+                    <span className={Styles.unit_title}>
+                        {props.type === 'sell' ? 'Đơn giá' : 'Mức giá'}
+                    </span>
                     <p className={Styles.unit_price}>
-                        {`${formatPricePerSquareMeter(
-                            props.acreages,
-                            props.prices
-                        )} `}
+                        {props.type === 'sell'
+                            ? `${formatPricePerSquareMeter(
+                                  props.acreages,
+                                  props.prices
+                              )}`
+                            : `${props.prices} Triệu/Tháng`}
                     </p>
                 </div>
             </div>
