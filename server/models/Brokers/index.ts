@@ -16,6 +16,10 @@ const BrokerSchema = new Schema<IBroker, BrokerModel>(
     {
         name: { type: String, required: true },
         phoneNumber: { type: [String], required: true },
+        avatar: { type: String, default: null },
+        zalo: { type: String, default: null },
+        facebook: { type: String, default: null },
+        note: { type: String, default: null },
     },
     {
         timestamps: false,
