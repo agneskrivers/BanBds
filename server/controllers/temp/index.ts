@@ -16,17 +16,17 @@ type ControllerTemp = (req: Request<ReqParams>, res: Response) => void;
 const Index: ControllerTemp = (req, res) => {
     const { image } = req.params;
 
+    const ext = path.extname(image).replace('.', '');
+
     const file = fs.createReadStream(path.join(pathTemp, image));
 
     file.on('open', () => {
-        res.set('Content-Type', 'image/webp');
+        res.set('Content-Type', `image/${ext}`);
 
         file.pipe(res);
     });
     file.on('error', () => {
-        res.set('Content-Type', 'text/plain');
-
-        res.status(404).end('Not found');
+        res.status(404).end();
     });
 };
 
