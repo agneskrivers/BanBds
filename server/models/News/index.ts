@@ -1,7 +1,7 @@
 import { model, Model, Schema } from 'mongoose';
 
 // Helpers
-import { handleError, getPages } from '@server/helpers';
+import { handleError, getPages, getLink } from '@server/helpers';
 
 // Interfaces
 import type {
@@ -9,6 +9,14 @@ import type {
     INewsCompactForApp,
     IHotNewsCompactForApp,
     INewsInfo,
+    INewsResultGetForDashboardWeb,
+    INewsCompactForWebDashboard,
+    IHotNewsCompactForWebDashboard,
+    INewsCompactForWeb,
+    INewsCompactModeSmallForWeb,
+    INewsCompactModeTitleForWeb,
+    INewsResultGetShortlistForWeb,
+    INewsResultGetInfoForWeb,
 } from '@interfaces';
 
 // Interface
@@ -24,12 +32,19 @@ interface NewsModel extends Model<INews> {
         page: number,
         region: string
     ): Promise<ResultGetShortlistForApp | null>;
-    getInfo(id: string): Promise<INewsInfo | null>;
+    getShortlistForWeb(
+        page: number,
+        list?: number[]
+    ): Promise<INewsResultGetShortlistForWeb | null>;
+    getInfoByID(id: string): Promise<INewsInfo | null>;
+    getInfoByNewsID(newsID: number): Promise<INewsResultGetInfoForWeb | null>;
+    getForDashboardWeb(): Promise<INewsResultGetForDashboardWeb | null>;
 }
 
 // Schema
 const NewsSchema = new Schema<INews, NewsModel>(
     {
+        newsID: { type: Number, unique: true, required: true },
         title: { type: String, required: true },
         description: { type: String, required: true },
         content: { type: String, required: true },
@@ -113,7 +128,125 @@ NewsSchema.statics.getShortlistForApp = async function (
         return null;
     }
 };
-NewsSchema.statics.getInfo = async function (
+NewsSchema.statics.getShortlistForWeb = async function (
+    page: number,
+    list?: number[]
+): Promise<INewsResultGetShortlistForWeb | null> {
+    try {
+        if (page === 0) {
+            let top: INewsCompactModeSmallForWeb[] | null = null;
+            let mostViews: INewsCompactModeTitleForWeb[] | null = null;
+
+            let listNewsID: number[] = [];
+
+            const count = await this.countDocuments();
+
+            if (count >= 23) {
+                const topList = await this.find().sort({ views: -1 }).limit(13);
+
+                top = [...topList].slice(0, 3).map((item) => {
+                    const { _id, title, thumbnail, newsID, createdAt } =
+                        item.toObject();
+
+                    const id = _id.toString();
+                    const time = new Date(createdAt).getTime();
+                    const link = getLink.news(title, newsID);
+
+                    return {
+                        id,
+                        link,
+                        newsID,
+                        thumbnail,
+                        time,
+                        title,
+                    };
+                });
+                mostViews = [...topList].slice(3, 13).map((item) => {
+                    const { _id, title, newsID } = item.toObject();
+
+                    const id = _id.toString();
+                    const link = getLink.news(title, newsID);
+
+                    return {
+                        id,
+                        link,
+                        title,
+                        newsID,
+                    };
+                });
+                listNewsID = [...topList].map((item) => item.newsID);
+            }
+
+            const listNews = await this.find({ newsID: { $nin: listNewsID } })
+                .limit(10)
+                .select('createdAt title newsID description thumbnail');
+
+            const latests: INewsCompactForWeb[] = [...listNews].map((item) => {
+                const { _id, createdAt, title, newsID, ...result } =
+                    item.toObject();
+
+                const id = _id.toString();
+                const time = new Date(createdAt).getTime();
+                const link = getLink.news(title, newsID);
+
+                return {
+                    ...result,
+                    id,
+                    time,
+                    link,
+                    title,
+                    newsID,
+                };
+            });
+            const pages = getPages(count >= 23 ? count - 13 : count);
+
+            return {
+                mode: 'first',
+                latests,
+                mostViews,
+                pages,
+                top,
+            };
+        }
+
+        if (!list) return null;
+
+        const news = await this.find({ newsID: { $nin: list } })
+            .limit(10)
+            .select('createdAt title newsID description thumbnail')
+            .skip(page * 10);
+
+        const latests: INewsCompactForWeb[] = [...news].map((item) => {
+            const { _id, createdAt, title, newsID, ...result } =
+                item.toObject();
+
+            const id = _id.toString();
+            const time = new Date(createdAt).getTime();
+            const link = getLink.news(title, newsID);
+
+            return {
+                ...result,
+                id,
+                time,
+                link,
+                title,
+                newsID,
+            };
+        });
+
+        return {
+            mode: 'more',
+            latests,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model News Static Get Shortlist For Web', message);
+
+        return null;
+    }
+};
+NewsSchema.statics.getInfoByID = async function (
     id: string
 ): Promise<INewsInfo | null> {
     try {
@@ -137,6 +270,110 @@ NewsSchema.statics.getInfo = async function (
         return null;
     }
 };
+NewsSchema.statics.getInfoByNewsID = async function (
+    newsID: number
+): Promise<INewsResultGetInfoForWeb | null> {
+    try {
+        const info = await this.findOne({ newsID }).select(
+            'title description content createdAt'
+        );
+
+        if (!info) return null;
+
+        const { createdAt, ...result } = info.toObject();
+
+        const time = new Date(createdAt).getTime();
+        const data = { ...result, time };
+
+        let more: INewsCompactForWeb[] | null = null;
+
+        const list = await this.find({ newsID: { $ne: newsID } })
+            .limit(5)
+            .select('createdAt title newsID description thumbnail');
+
+        if (list.length > 0) {
+            more = [...list].map((item) => {
+                const { _id, createdAt, title, newsID, ...result } =
+                    item.toObject();
+
+                const id = _id.toString();
+                const time = new Date(createdAt).getTime();
+                const link = getLink.news(title, newsID);
+
+                return {
+                    ...result,
+                    id,
+                    time,
+                    link,
+                    title,
+                    newsID,
+                };
+            });
+        }
+
+        return {
+            data,
+            more,
+        };
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model News Static Get Info For Web', message);
+
+        return null;
+    }
+};
+NewsSchema.statics.getForDashboardWeb =
+    async function (): Promise<INewsResultGetForDashboardWeb | null> {
+        try {
+            const hots = await this.find()
+                .sort({ views: -1 })
+                .select('title thumbnail description newsID');
+
+            if (hots.length < 7) return null;
+
+            const { _id, title, description, thumbnail, newsID } =
+                hots[0].toObject();
+
+            const hotID = _id.toString();
+            const hotLink = getLink.news(title, newsID);
+
+            const hot: IHotNewsCompactForWebDashboard = {
+                content: description,
+                id: hotID,
+                link: hotLink,
+                thumbnail,
+                title,
+            };
+
+            const list = await this.find({ _id: { $ne: _id } })
+                .limit(6)
+                .select('title newsID');
+
+            const latests: INewsCompactForWebDashboard[] = [...list].map(
+                (item) => {
+                    const { _id, title, newsID } = item.toObject();
+
+                    const id = _id.toString();
+
+                    const link = getLink.news(title, newsID);
+
+                    return { id, link, title };
+                }
+            );
+
+            return {
+                hot,
+                latests,
+            };
+        } catch (error) {
+            const { message } = error as Error;
+
+            handleError('Model News Static Get For Dashboard Web', message);
+
+            return null;
+        }
+    };
 
 // Models
 const Index = model<INews, NewsModel>('News', NewsSchema);
