@@ -26,10 +26,10 @@ const Index: IServerCommonConvertSize = async (pathFile, isAvatar) => {
         if (dimensions) {
             // Calculate the new width and height
             convertWidth = dimensions.width
-                ? Math.floor(dimensions.width / 2)
+                ? Math.floor(dimensions.width * 0.8)
                 : null;
             convertHeight = dimensions.height
-                ? Math.floor(dimensions.height / 2)
+                ? Math.floor(dimensions.height * 0.8)
                 : null;
         }
 
