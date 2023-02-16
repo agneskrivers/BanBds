@@ -9,6 +9,7 @@ import type { IInvestor } from '@interfaces';
 // Model Interface
 interface InvestorModel extends Model<IInvestor> {
     getName(id: string): Promise<string | null>;
+    getInfo(id: string): Promise<IInvestor | null>;
 }
 
 // Schema
@@ -36,6 +37,23 @@ InvestorSchema.statics.getName = async function (
         const { message } = error as Error;
 
         handleError('Model Investors Static Get Name', message);
+
+        return null;
+    }
+};
+InvestorSchema.statics.getInfo = async function (
+    id: string
+): Promise<IInvestor | null> {
+    try {
+        const investor = await this.findById(id);
+
+        if (!investor) return null;
+
+        return investor.toObject();
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Investors Statics Get Info', message);
 
         return null;
     }
