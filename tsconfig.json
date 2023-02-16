@@ -36,6 +36,7 @@
             "@client/helpers": ["./src/helpers/index.ts"],
             "@client/layouts": ["./src/layouts/index.ts"],
             "@client/scss/*": ["./src/scss/*"],
+            "@client/services": ["./src/services/index.ts"],
 
             // Server
             "@server/apis": ["./server/APIs/index.ts"],
@@ -47,22 +48,30 @@
             "@server/controllers/Common": [
                 "./server/APIs/Common/controllers/index.ts"
             ],
+            "@server/controllers/Web": [
+                "./server/APIs/Web/controllers/index.ts"
+            ],
             "@server/enums": ["./server/enums/index.ts"],
             "@server/helpers": ["./server/helpers/index.ts"],
             "@server/middleware/App": ["./server/APIs/App/middleware/index.ts"],
             "@server/middleware/Common": [
                 "./server/APIs/Common/middleware/index.ts"
             ],
+            "@server/middleware/Web": ["./server/APIs/Web/middleware/index.ts"],
             "@server/helpers/Common": ["./server/APIs/Common/helpers/index.ts"],
             "@server/models": ["./server/models/index.ts"],
             "@server/routes/App": ["./server/APIs/App/routes/index.ts"],
             "@server/routes/Common": ["./server/APIs/Common/routes/index.ts"],
+            "@server/routes/Web": ["./server/APIs/Web/routes/index.ts"],
             "@server/services": ["./server/services/index.ts"],
             "@server/utils": ["./server/utils/index.ts"],
             "@server/utils/Common": ["./server/APIs/Common/utils/index.ts"]
         } /* Specify a set of entries that re-map imports to additional lookup locations. */,
         // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
-        // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
+        // "typeRoots": [
+        //     "./types/index.ts",
+        //     "./node_modules/@types"
+        // ] /* Specify multiple folders that act like './node_modules/@types'. */,
         // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
         // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
         // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
