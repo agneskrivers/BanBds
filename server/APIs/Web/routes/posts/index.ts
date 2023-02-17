@@ -9,6 +9,7 @@ import middleware from '@server/middleware/Web';
 const router = Router();
 
 // Get
+router.get('/count/:postID', controllers.posts.count);
 router.get('/', controllers.posts.shortlist);
 router.get('/my', middleware, controllers.posts.myShortlist);
 router.get('/dashboard', controllers.posts.dashboard);
