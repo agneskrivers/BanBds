@@ -43,6 +43,7 @@ interface ProjectModel extends Model<IProject> {
     getListSelectForWeb(): Promise<ISelect[] | null>;
     getForDashboardWeb(): Promise<IProjectCompactForWebDashboard[] | null>;
     getTotalsByAreas(id?: string): Promise<ITotalsByAreas[] | null>;
+    countViews(projectID: number): Promise<boolean>;
 }
 
 // Schema
@@ -489,6 +490,29 @@ ProjectSchema.statics.getTotalsByAreas = async function (id?: string) {
         handleError('Model Projects Static Get Totals By Areas', message);
 
         return null;
+    }
+};
+ProjectSchema.statics.countViews = async function (
+    projectID: number
+): Promise<boolean> {
+    try {
+        const project = await this.findOne({ projectID });
+
+        if (!project) return false;
+
+        const updateViews = project.views + 1;
+
+        project.views = updateViews;
+
+        await project.save();
+
+        return true;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model Projects Static Count Views', message);
+
+        return false;
     }
 };
 

@@ -39,6 +39,7 @@ interface NewsModel extends Model<INews> {
     getInfoByID(id: string): Promise<INewsInfo | null>;
     getInfoByNewsID(newsID: number): Promise<INewsResultGetInfoForWeb | null>;
     getForDashboardWeb(): Promise<INewsResultGetForDashboardWeb | null>;
+    countViews(newsID: number): Promise<boolean>;
 }
 
 // Schema
@@ -374,6 +375,29 @@ NewsSchema.statics.getForDashboardWeb =
             return null;
         }
     };
+NewsSchema.statics.countViews = async function (
+    newsID: number
+): Promise<boolean> {
+    try {
+        const news = await this.findOne({ newsID });
+
+        if (!news) return false;
+
+        const updateViews = news.views + 1;
+
+        news.views = updateViews;
+
+        await news.save();
+
+        return true;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Model News Static Count Views', message);
+
+        return false;
+    }
+};
 
 // Models
 const Index = model<INews, NewsModel>('News', NewsSchema);

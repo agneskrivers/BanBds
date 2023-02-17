@@ -7,7 +7,6 @@ import {
     generateID,
     getAddress,
     getPages,
-    convertToEnglish,
     getLink,
 } from '@server/helpers';
 
@@ -76,6 +75,8 @@ interface PostMethods extends Document, IPost {
 // Model Interface
 interface PostModel extends Model<IPost, Record<string, string>, PostMethods> {
     createPost(userID: number, data: IPostCreate): Promise<number | null>;
+    countViews(postID: number): Promise<boolean>;
+
     getShortlistForApp(
         page: number,
         type: IPostType,
@@ -630,7 +631,7 @@ PostSchema.statics.getInfoForWeb = async function (
         const post = await this.findOne(
             { postID },
             { projection: { _id: 0 } }
-        ).select('updatedAt editor status postID');
+        ).select('updatedAt editor postID');
 
         if (!post) return null;
 
@@ -696,7 +697,7 @@ PostSchema.statics.getInfoForApp = async function (
 
         if (!result) return null;
 
-        const link = `tin-dang/${convertToEnglish(result.title)}-${postID}`;
+        const link = getLink.post(result.title, result.postID);
 
         return {
             ...result,
@@ -994,6 +995,29 @@ PostSchema.statics.getTotalsByAreas = async function (
         handleError('Model Posts Static Get Totals By Areas', message);
 
         return null;
+    }
+};
+PostSchema.statics.countViews = async function (
+    postID: number
+): Promise<boolean> {
+    try {
+        const post = await this.findOne({ postID });
+
+        if (!post) return false;
+
+        const updateViews = post.views + 1;
+
+        post.views = updateViews;
+
+        await post.save();
+
+        return true;
+    } catch (error) {
+        const { message } = error as Error;
+
+        handleError('Modal Posts Static Count Views', message);
+
+        return false;
     }
 };
 
