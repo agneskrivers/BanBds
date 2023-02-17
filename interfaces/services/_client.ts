@@ -200,3 +200,7 @@ export type IClientServiceCommonImageUpload = (
 export type IClientServiceFirst = (
     signal: AbortSignal
 ) => Promise<IApiWebFirst>;
+export type IClientServiceCount = (
+    signal: AbortSignal,
+    id: number
+) => Promise<boolean>;

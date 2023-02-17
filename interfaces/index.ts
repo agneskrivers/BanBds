@@ -84,3 +84,11 @@ export interface ISelect {
     value: string;
     label: string;
 }
+export interface IClientLocalStorage {
+    data: {
+        posts?: number[];
+        projects?: number[];
+        news?: number[];
+    };
+    expired: number;
+}
