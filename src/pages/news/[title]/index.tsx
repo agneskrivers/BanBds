@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -32,12 +32,98 @@ import type {
     NextPageWithLayout,
     IPropsSeverSide,
     IApiWebNewsInfo,
+    IClientLocalStorage,
 } from '@interfaces';
 
+// Interface
+interface PropsResult extends IApiWebNewsInfo {
+    newsID: number;
+}
+
 // Props
-type Props = IPropsSeverSide<IApiWebNewsInfo>;
+type Props = IPropsSeverSide<PropsResult>;
 
 const Index: NextPageWithLayout<Props> = (props) => {
+    // Effects
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const checkNews = (newsID: number): boolean => {
+            const local = localStorage.getItem('session');
+
+            if (!local) {
+                const createLocal: IClientLocalStorage = {
+                    data: { news: [newsID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const storage = JSON.parse(local) as IClientLocalStorage;
+
+            if (storage.expired < Date.now()) {
+                localStorage.removeItem('session');
+
+                const createLocal: IClientLocalStorage = {
+                    data: { news: [newsID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const { news } = storage.data;
+
+            if (!news) {
+                const updateStorage: IClientLocalStorage = {
+                    ...storage,
+                    data: {
+                        ...storage.data,
+                        news: [newsID],
+                    },
+                };
+
+                localStorage.removeItem('session');
+                localStorage.setItem('session', JSON.stringify(updateStorage));
+
+                return true;
+            }
+
+            if (news.includes(newsID)) return false;
+
+            const updateStorage: IClientLocalStorage = {
+                ...storage,
+                data: {
+                    ...storage.data,
+                    news: [...news, newsID],
+                },
+            };
+
+            localStorage.removeItem('session');
+            localStorage.setItem('session', JSON.stringify(updateStorage));
+
+            return true;
+        };
+        const getData = async (signal: AbortSignal, newsID: number) => {
+            await services.news.count(signal, newsID);
+        };
+
+        if (props.status === 'success') {
+            const isCount = checkNews(props.newsID);
+
+            if (isCount) {
+                getData(controller.signal, props.newsID);
+            }
+        }
+
+        return () => controller.abort();
+    }, []);
+
     if (props.status === 'error') return <ErrorComponent statusCode={500} />;
 
     const { data, more, posts } = props;
@@ -165,6 +251,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return {
         props: {
             status: 'success',
+            newsID,
             ...result,
         },
     };

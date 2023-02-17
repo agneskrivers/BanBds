@@ -34,6 +34,7 @@ import type {
     NextPageWithLayout,
     IPropsSeverSide,
     IPostInfoForWeb,
+    IClientLocalStorage,
 } from '@interfaces';
 
 // Props
@@ -55,7 +56,85 @@ const Index: NextPageWithLayout<Props> = (props) => {
 
     // Effects
     useEffect(() => {
+        const controller = new AbortController();
+
+        const getData = async (signal: AbortSignal, postID: number) => {
+            await services.posts.count(signal, postID);
+        };
+
+        const checkPost = (postID: number): boolean => {
+            const local = localStorage.getItem('session');
+
+            if (!local) {
+                const createLocal: IClientLocalStorage = {
+                    data: { posts: [postID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const storage = JSON.parse(local) as IClientLocalStorage;
+
+            if (storage.expired < Date.now()) {
+                localStorage.removeItem('session');
+
+                const createLocal: IClientLocalStorage = {
+                    data: { posts: [postID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const { posts } = storage.data;
+
+            if (!posts) {
+                const updateStorage: IClientLocalStorage = {
+                    ...storage,
+                    data: {
+                        ...storage.data,
+                        posts: [postID],
+                    },
+                };
+
+                localStorage.removeItem('session');
+                localStorage.setItem('session', JSON.stringify(updateStorage));
+
+                return true;
+            }
+
+            if (posts.includes(postID)) return false;
+
+            const updateStorage: IClientLocalStorage = {
+                ...storage,
+                data: {
+                    ...storage.data,
+                    posts: [...posts, postID],
+                },
+            };
+
+            localStorage.removeItem('session');
+            localStorage.setItem('session', JSON.stringify(updateStorage));
+
+            return true;
+        };
+
+        if (props.status === 'success') {
+            const isCount = checkPost(props.postID);
+
+            if (isCount) {
+                getData(controller.signal, props.postID);
+            }
+        }
+
         setIsLoaded(true);
+
+        return () => controller.abort();
     }, []);
     useEffect(() => {
         const handleScroll = () => {
@@ -493,8 +572,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
     return {
         props: {
-            status: 'success',
             ...result,
+            status: 'success',
         },
     };
 };

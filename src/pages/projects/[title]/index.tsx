@@ -35,10 +35,16 @@ import type {
     NextPageWithLayout,
     IApiWebProjectInfo,
     IPropsSeverSide,
+    IClientLocalStorage,
 } from '@interfaces';
 
+// Interface
+interface PropsResult extends IApiWebProjectInfo {
+    projectID: number;
+}
+
 // Props
-type Props = IPropsSeverSide<IApiWebProjectInfo>;
+type Props = IPropsSeverSide<PropsResult>;
 
 const Index: NextPageWithLayout<Props> = (props) => {
     // States
@@ -47,7 +53,84 @@ const Index: NextPageWithLayout<Props> = (props) => {
 
     // Effects
     useEffect(() => {
+        const controller = new AbortController();
+
+        const getData = async (signal: AbortSignal, projectID: number) => {
+            await services.projects.count(signal, projectID);
+        };
+        const checkProject = (projectID: number): boolean => {
+            const local = localStorage.getItem('session');
+
+            if (!local) {
+                const createLocal: IClientLocalStorage = {
+                    data: { projects: [projectID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const storage = JSON.parse(local) as IClientLocalStorage;
+
+            if (storage.expired < Date.now()) {
+                localStorage.removeItem('session');
+
+                const createLocal: IClientLocalStorage = {
+                    data: { projects: [projectID] },
+                    expired: Date.now() + 6 * 60 * 60 * 1000,
+                };
+
+                localStorage.setItem('session', JSON.stringify(createLocal));
+
+                return true;
+            }
+
+            const { projects } = storage.data;
+
+            if (!projects) {
+                const updateStorage: IClientLocalStorage = {
+                    ...storage,
+                    data: {
+                        ...storage.data,
+                        projects: [projectID],
+                    },
+                };
+
+                localStorage.removeItem('session');
+                localStorage.setItem('session', JSON.stringify(updateStorage));
+
+                return true;
+            }
+
+            if (projects.includes(projectID)) return false;
+
+            const updateStorage: IClientLocalStorage = {
+                ...storage,
+                data: {
+                    ...storage.data,
+                    projects: [...projects, projectID],
+                },
+            };
+
+            localStorage.removeItem('session');
+            localStorage.setItem('session', JSON.stringify(updateStorage));
+
+            return true;
+        };
+
+        if (props.status === 'success') {
+            const isCount = checkProject(props.projectID);
+
+            if (isCount) {
+                getData(controller.signal, props.projectID);
+            }
+        }
+
         setIsLoaded(true);
+
+        return () => controller.abort();
     }, []);
 
     // Handles
@@ -347,6 +430,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return {
         props: {
             status: 'success',
+            projectID,
             ...result,
         },
     };
