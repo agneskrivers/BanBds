@@ -363,6 +363,8 @@ PostSchema.statics.getShortlistForApp = async function (
             if (prices) {
                 doc.sort({ prices });
             }
+        } else {
+            doc.sort({ createAt: -1 });
         }
 
         const list = await doc
