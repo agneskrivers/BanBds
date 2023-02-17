@@ -21,7 +21,11 @@ import Styles from '@client/scss/pages/post/index.module.scss';
 import { MapComponent } from '@client/components';
 
 // Helpers
-import { formatPricePerSquareMeter, getName } from '@client/helpers';
+import {
+    formatPricePerSquareMeter,
+    getName,
+    formatPhoneNumber,
+} from '@client/helpers';
 
 // Layouts
 import { WebLayout } from '@client/layouts';
@@ -43,6 +47,7 @@ type Props = IPropsSeverSide<IPostInfoForWeb>;
 const Index: NextPageWithLayout<Props> = (props) => {
     // States
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
+    const [isShowPhone, setIsShowPhone] = useState<boolean>(false);
 
     const [isHeader, setIsHeader] = useState<boolean>(false);
     const [isImages, setIsImages] = useState<boolean>(true);
@@ -50,6 +55,8 @@ const Index: NextPageWithLayout<Props> = (props) => {
 
     const [isModalImages, setIsModalImages] = useState<boolean>(false);
     const [isModalMap, setIsModalMap] = useState<boolean>(false);
+
+    const [phoneCopy, setPhoneCopy] = useState<string>();
 
     // Ref
     const divImageRef = useRef<HTMLDivElement | null>(null);
@@ -165,6 +172,15 @@ const Index: NextPageWithLayout<Props> = (props) => {
 
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+    useEffect(() => {
+        let id: NodeJS.Timeout;
+
+        if (phoneCopy) {
+            id = setTimeout(() => setPhoneCopy(undefined), 3000);
+        }
+
+        return () => clearTimeout(id);
+    }, [phoneCopy]);
 
     // Handles
     const handleOpenModalImages = () => setIsModalImages(true);
@@ -172,6 +188,13 @@ const Index: NextPageWithLayout<Props> = (props) => {
 
     const handleOpenModalMap = () => setIsModalMap(true);
     const handleCloseModalMap = () => setIsModalMap(false);
+
+    const handleClickShowPhone = (phone?: string) => {
+        if (!phone) return setIsShowPhone(true);
+
+        navigator.clipboard.writeText(phone);
+        setPhoneCopy(phone);
+    };
 
     if (props.status === 'error') return <ErrorComponent statusCode={500} />;
 
@@ -474,12 +497,48 @@ const Index: NextPageWithLayout<Props> = (props) => {
                                         </h4>
                                     </div>
                                     <hr />
-                                    <Button
-                                        className={Styles.author_btn}
-                                        variant='primary'
-                                    >
-                                        Hiện số
-                                    </Button>
+                                    {!isShowPhone ? (
+                                        <Button
+                                            className={Styles.author_btn}
+                                            variant='primary'
+                                            onClick={() =>
+                                                handleClickShowPhone()
+                                            }
+                                        >
+                                            Hiện số
+                                        </Button>
+                                    ) : (
+                                        props.phoneNumber.map((item) => (
+                                            <OverlayTrigger
+                                                key={item}
+                                                placement='top'
+                                                overlay={
+                                                    <Tooltip
+                                                        id={`tooltip-${item}`}
+                                                    >
+                                                        {phoneCopy &&
+                                                        phoneCopy === item
+                                                            ? 'Đã sao chép'
+                                                            : 'Sao chép'}
+                                                    </Tooltip>
+                                                }
+                                            >
+                                                <Button
+                                                    className={
+                                                        Styles.author_btn
+                                                    }
+                                                    variant='primary'
+                                                    onClick={() =>
+                                                        handleClickShowPhone(
+                                                            item
+                                                        )
+                                                    }
+                                                >
+                                                    {formatPhoneNumber(item)}
+                                                </Button>
+                                            </OverlayTrigger>
+                                        ))
+                                    )}
                                 </div>
                             </Col>
                         </Row>
