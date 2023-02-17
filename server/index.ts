@@ -33,16 +33,6 @@ import {
 // Controllers
 import controllers from '@server/controllers';
 
-// Declare
-declare module 'express-session' {
-    interface SessionData {
-        posts: number[];
-        projects: number[];
-        news: string[];
-        views: number;
-    }
-}
-
 // MongoDB
 connect(MongoURI);
 connection.on('error', console.error.bind(console, 'Connect MongoDB Error:'));
@@ -68,13 +58,12 @@ address()
                 server.use(
                     session({
                         secret: SecretSession,
-                        cookie: {
-                            maxAge: 21600000,
-                            secure: process.env.NODE_ENV === 'production',
-                        },
                         resave: false,
-                        saveUninitialized: false,
-                        store: new MongoStore({ mongoUrl: MongoStoreURI }),
+                        saveUninitialized: true,
+                        store: MongoStore.create({
+                            mongoUrl: MongoStoreURI,
+                            ttl: 60 * 60,
+                        }),
                     })
                 );
                 server.use(helmet({ contentSecurityPolicy: false }));
@@ -91,18 +80,6 @@ address()
                 server.get('/img/news/:image', controllers.news);
                 server.get('/img/projects/:image', controllers.projects);
                 server.get('/temp/:image', controllers.temp);
-
-                server.get('/test', function (req, res) {
-                    if (req.session.views) {
-                        req.session.views++;
-                        res.setHeader('Content-Type', 'text/html');
-                        res.write('<p>views: ' + req.session.views + '</p>');
-                        res.end();
-                    } else {
-                        req.session.views = 1;
-                        res.end('welcome to the session demo. refresh!');
-                    }
-                });
 
                 server.all('*', (req, res) => appHandler(req, res));
 
