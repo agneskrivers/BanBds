@@ -4,7 +4,7 @@ import path from 'path';
 import type { ILinkJSON, IVersionJSON } from '@interfaces';
 
 export const MongoURI = process.env.MONGO_URI as string;
-export const MongoStoreURI = process.env.MONGO_STORE_URI as string;
+export const MongoStoreURI = process.env.MONGO_STORE_URI as string | undefined;
 export const SecretJWT = process.env.SECRET_JWT as string;
 export const SecretCookie = process.env.SECRET_COOKIE as string;
 export const SecretSession = process.env.SECRET_SESSION as string;

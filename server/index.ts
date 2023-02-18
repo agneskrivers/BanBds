@@ -61,7 +61,7 @@ address()
                         resave: false,
                         saveUninitialized: true,
                         store: MongoStore.create({
-                            mongoUrl: MongoStoreURI,
+                            mongoUrl: MongoStoreURI ? MongoStoreURI : MongoURI,
                             ttl: 60 * 60,
                         }),
                     })
