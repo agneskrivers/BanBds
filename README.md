@@ -51,6 +51,8 @@ Replace `your-version` with the version of MongoDB you're using (e.g. `4.4`).
     mongoimport --host localhost:27017 --db your-db-name --collection wards --drop --file path/to/MongoDB/wards.json
 ```
 
+Replace `your-db-name` with the appropriate values for your setup
+
 5. Build the application:
 
 ```bash
